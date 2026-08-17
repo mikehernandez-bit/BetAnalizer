@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { importedFileSchema, type ImportedFile } from "@/lib/validation/match-package";
+import { importedFileSchema, removeLegacyHistoryAliases, type ImportedFile } from "@/lib/validation/match-package";
 
 // ============================================================================
 // Persistencia de los paquetes importados.
@@ -41,7 +41,7 @@ export async function readImportedFile(filePath: string = getStorePath()): Promi
     throw new Error(`El archivo de almacenamiento (${filePath}) contiene JSON inválido.`);
   }
 
-  const result = importedFileSchema.safeParse(parsed);
+  const result = importedFileSchema.safeParse(removeLegacyHistoryAliases(parsed));
   if (!result.success) {
     throw new Error(`El archivo de almacenamiento (${filePath}) no cumple el esquema esperado.`);
   }

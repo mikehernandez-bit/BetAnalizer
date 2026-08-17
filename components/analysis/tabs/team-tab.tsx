@@ -3,7 +3,7 @@
 import * as React from "react";
 import { MarketCategory, Pattern, StatKey, Team, TeamForm } from "@/types";
 import { MARKET_CATEGORY_LABELS } from "@/data/markets";
-import { TeamHistoryTable } from "@/components/analysis/team-history-table";
+import { TeamMatchList } from "@/components/analysis/team-match-list";
 import { TeamStatSummary } from "@/components/analysis/team-stat-summary";
 import { PatternCard } from "@/components/patterns/pattern-card";
 import { ChartContainer } from "@/components/shared/chart-container";
@@ -26,7 +26,15 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "misma_competicion", label: "Misma competición" },
 ];
 
-const PATTERN_CATEGORY_ORDER: MarketCategory[] = ["corners", "goles", "ambos_marcan", "tiros_arco", "remates", "resultado"];
+const PATTERN_CATEGORY_ORDER: MarketCategory[] = [
+  "corners",
+  "goles",
+  "primera_parte",
+  "segunda_parte",
+  "ambos_marcan",
+  "tarjetas",
+  "resultado",
+];
 
 interface TeamTabProps {
   team: Team;
@@ -38,7 +46,7 @@ interface TeamTabProps {
 
 export function TeamTab({ team, form, patterns, side, matchCompetitionId }: TeamTabProps) {
   const [filter, setFilter] = React.useState<FilterKey>("all");
-  const teamRoleLabel = side === "home" ? "Equipo 1" : "Equipo 2";
+  const teamRoleLabel = side === "home" ? "Local" : "Visitante";
 
   const filtered = React.useMemo(() => {
     return form.matches.filter((r) => {
@@ -57,18 +65,14 @@ export function TeamTab({ team, form, patterns, side, matchCompetitionId }: Team
       ? [
           { key: "goalsFor", label: "Goles a favor" },
           { key: "cornersFor", label: "Córners a favor" },
-          { key: "shotsFor", label: "Remates" },
-          { key: "shotsOnTargetFor", label: "Tiros al arco" },
         ]
       : [
           { key: "goalsAgainst", label: "Goles recibidos" },
           { key: "cornersAgainst", label: "Córners concedidos" },
-          { key: "shotsAgainst", label: "Remates permitidos" },
-          { key: "shotsOnTargetAgainst", label: "Tiros al arco permitidos" },
         ];
 
   const chronological = [...form.matches].reverse();
-  const chartData = (key: StatKey) => chronological.map((r) => ({ label: formatDateShort(r.date), value: r[key] }));
+  const chartData = (key: StatKey) => chronological.map((r) => ({ label: formatDateShort(r.date), value: r[key] ?? 0 }));
   const patternsByCategory = React.useMemo(
     () =>
       PATTERN_CATEGORY_ORDER.map((category) => ({
@@ -97,7 +101,7 @@ export function TeamTab({ team, form, patterns, side, matchCompetitionId }: Team
       {filtered.length === 0 ? (
         <EmptyState icon={BarChart3} title="Sin partidos para este filtro" description="Prueba con otro criterio de filtrado." />
       ) : (
-        <TeamHistoryTable records={filtered} />
+        <TeamMatchList team={team} records={filtered} />
       )}
 
       <div>
@@ -135,12 +139,6 @@ export function TeamTab({ team, form, patterns, side, matchCompetitionId }: Team
         </ChartContainer>
         <ChartContainer title="Evolución de córners" height={220}>
           <TrendLineChart data={chartData(side === "home" ? "cornersFor" : "cornersAgainst")} color="#3B82F6" />
-        </ChartContainer>
-        <ChartContainer title="Evolución de remates" height={220}>
-          <TrendLineChart data={chartData(side === "home" ? "shotsFor" : "shotsAgainst")} color="#F59E0B" />
-        </ChartContainer>
-        <ChartContainer title="Evolución de tiros al arco" height={220}>
-          <TrendLineChart data={chartData(side === "home" ? "shotsOnTargetFor" : "shotsOnTargetAgainst")} color="#A855F7" />
         </ChartContainer>
       </div>
     </div>

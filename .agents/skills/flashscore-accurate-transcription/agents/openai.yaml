@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flashscore Accurate Transcription"
+  short_description: "Transcribe match screenshots without perspective errors"
+  default_prompt: "Use $flashscore-accurate-transcription for screenshot transcription. Audit local/away perspective, FT/1T/2T, corners, shots, yellow cards, red cards, friendlies, and exactly 10 official matches per team before saving."

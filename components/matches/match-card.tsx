@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles, MapPin } from "lucide-react";
+import { Sparkles, MapPin, AlertTriangle } from "lucide-react";
 import { Match } from "@/types";
 import { getTeamById } from "@/data/teams";
 import { getCompetitionById } from "@/data/competitions";
@@ -13,6 +13,8 @@ import { Card } from "@/components/ui/card";
 import { COMPETITION_TYPE_LABEL } from "@/lib/labels";
 import { pluralize, relativeDayLabel } from "@/utils/formatters";
 import { getTodayIso } from "@/services/match-service";
+import { checkMatchDataAudit } from "@/utils/data-audit";
+import { DownloadCardButton } from "@/components/shared/download-card-button";
 
 export function MatchCard({ match }: { match: Match }) {
   const home = getTeamById(match.homeTeamId);
@@ -22,21 +24,34 @@ export function MatchCard({ match }: { match: Match }) {
 
   const stats = estimateFeaturedStats(home.id, away.id);
   const favored = stats.favoredTeamId === home.id ? home : away;
+  const audit = checkMatchDataAudit(home.id, away.id, 10);
 
   return (
-    <Card className="group relative overflow-hidden p-4 transition-colors hover:border-brand-green/30 sm:p-5">
+    <Card className="card-download-target group relative overflow-hidden p-4 transition-colors hover:border-brand-green/30 sm:p-5">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground flex-wrap">
           <Badge variant="outline" className="border-border text-[10px] font-medium">
             {competition?.shortName ?? "Competición"}
           </Badge>
+          {audit.hasIncompleteData && (
+            <Badge
+              variant="outline"
+              className="border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 gap-1 text-[10px] font-medium"
+              title={audit.summaryText}
+            >
+              <AlertTriangle className="size-3" /> Datos parciales
+            </Badge>
+          )}
           <span>{COMPETITION_TYPE_LABEL[match.competitionType]}</span>
           <span aria-hidden>·</span>
           <span>{relativeDayLabel(match.date, getTodayIso())}</span>
           <span aria-hidden>·</span>
           <span>{match.time}</span>
         </div>
-        <FavoriteButton type="match" refId={match.id} label={`${home.shortName} vs ${away.shortName}`} meta={competition?.name} />
+        <div className="flex items-center gap-1.5 shrink-0">
+          <DownloadCardButton filename={`partido_${home.id}_vs_${away.id}`} />
+          <FavoriteButton type="match" refId={match.id} label={`${home.shortName} vs ${away.shortName}`} meta={competition?.name} />
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -57,6 +72,15 @@ export function MatchCard({ match }: { match: Match }) {
           <FormIndicator results={away.form} />
         </div>
       </div>
+
+      {audit.hasIncompleteData && (
+        <div className="mt-3 flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="size-3 shrink-0" />
+          <span className="truncate">
+            Muestras parciales ({audit.missingMetrics.join(", ")}) en {audit.incompleteTeamNames.join(" y ")}
+          </span>
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2 text-xs">
         <span className="flex items-center gap-1.5 text-muted-foreground">

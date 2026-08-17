@@ -30,17 +30,6 @@ export const viewport: Viewport = {
   themeColor: "#070B10",
 };
 
-const themeInitScript = `
-(function () {
-  try {
-    var stored = window.localStorage.getItem("betanalyzer-theme");
-    var theme = stored === "light" ? "light" : "dark";
-    if (theme === "dark") document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-  } catch (e) {}
-})();
-`;
-
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -48,9 +37,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
       <body className="min-h-full flex flex-col bg-app-gradient">
         <ThemeProvider>
           <TooltipProvider delayDuration={200}>

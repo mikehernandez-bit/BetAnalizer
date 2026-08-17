@@ -23,20 +23,14 @@ export function parseAnalysisId(id: string): { homeTeamId: string; awayTeamId: s
   return { homeTeamId: homePart, awayTeamId, matchCount: count };
 }
 
+/**
+ * "odds" arranca siempre vacío: BetAnalyzer no tiene una fuente real de cuotas
+ * publicadas, así que no inventa ninguna por defecto. Se completa únicamente
+ * si el usuario carga cuotas reales de su casa de apuestas en el paso
+ * "Cuotas" del asistente — nunca con un valor de referencia fabricado.
+ */
 export function defaultAnalysisConfig(homeTeamId: string, awayTeamId: string, matchCount: MatchSampleSize = 10): AnalysisConfig {
   const homeTeam = getTeamById(homeTeamId);
-  const publishedOdds: Record<string, Partial<Record<string, number>>> = {
-    // Cuotas prepartido publicadas el 3 de agosto de 2026 por RedScores.
-    "ararat-armenia::nk-celje": {
-      result_home_win: 2.7,
-      result_draw: 3.2,
-      result_away_win: 2.45,
-      goals_over_25: 2,
-      goals_under_25: 1.8,
-      btts_yes: 1.73,
-      btts_no: 2,
-    },
-  };
   return {
     competitionId: homeTeam?.competitionId ?? "uefa-champions-league",
     season: "2026",
@@ -53,7 +47,7 @@ export function defaultAnalysisConfig(homeTeamId: string, awayTeamId: string, ma
     weightLastFive: true,
     excludeRedCards: false,
     excludeFriendlies: true,
-    odds: publishedOdds[`${homeTeamId}::${awayTeamId}`] ?? {},
+    odds: {},
   };
 }
 

@@ -99,7 +99,7 @@ export function deriveHeadToHead(teamAId: string, teamBId: string, histories: Re
     else if (bGoals > aGoals) teamBWins += 1;
     else draws += 1;
     goalsSum += m.homeGoals + m.awayGoals;
-    cornersSum += m.homeCorners + m.awayCorners;
+    cornersSum += (m.homeCorners ?? 0) + (m.awayCorners ?? 0);
     if (m.homeGoals > 0 && m.awayGoals > 0) bothScored += 1;
     if (m.homeGoals + m.awayGoals > 2.5) over25 += 1;
   });
@@ -182,10 +182,10 @@ export function deriveCommonOpponents(
     const teamB = toCommonOpponentSide(bByOpponent.get(opponentId)!);
     const difference = {
       goals: round1(teamA.goalsFor - teamB.goalsFor),
-      corners: round1(teamA.corners - teamB.corners),
-      shots: round1(teamA.shots - teamB.shots),
-      shotsOnTarget: round1(teamA.shotsOnTarget - teamB.shotsOnTarget),
-      possession: round1(teamA.possession - teamB.possession),
+      corners: round1((teamA.corners ?? 0) - (teamB.corners ?? 0)),
+      shots: round1((teamA.shots ?? 0) - (teamB.shots ?? 0)),
+      shotsOnTarget: round1((teamA.shotsOnTarget ?? 0) - (teamB.shotsOnTarget ?? 0)),
+      possession: round1((teamA.possession ?? 0) - (teamB.possession ?? 0)),
     };
     return {
       opponentId,

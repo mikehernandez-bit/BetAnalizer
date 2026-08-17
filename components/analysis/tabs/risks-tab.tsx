@@ -1,10 +1,14 @@
 import { AnalysisResult } from "@/types";
+import { getTeamById } from "@/data/teams";
 import { Card, CardContent } from "@/components/ui/card";
 import { RiskCard } from "@/components/markets/risk-card";
 import { DATA_QUALITY_LABEL } from "@/lib/labels";
 import { AlertTriangle, Database, ShieldAlert } from "lucide-react";
 
 export function RisksTab({ analysis }: { analysis: AnalysisResult }) {
+  const home = getTeamById(analysis.match.homeTeamId);
+  const away = getTeamById(analysis.match.awayTeamId);
+  const matchLabel = `${home?.shortName ?? "Local"} vs ${away?.shortName ?? "Visitante"}`;
   const contradictoryPatterns = analysis.crossPatterns.filter((p) => p.strength === "contradictorio");
 
   return (
@@ -49,7 +53,7 @@ export function RisksTab({ analysis }: { analysis: AnalysisResult }) {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {analysis.avoid.map((evaluation) => (
-              <RiskCard key={evaluation.id} evaluation={evaluation} />
+              <RiskCard key={evaluation.id} evaluation={evaluation} matchLabel={matchLabel} />
             ))}
           </div>
         )}

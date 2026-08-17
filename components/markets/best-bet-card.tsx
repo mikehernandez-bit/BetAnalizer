@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Star, Share2, ListPlus, Microscope, Check } from "lucide-react";
-import { BettingRecommendation } from "@/types";
+import { BettingRecommendation, CONFIDENCE_WEIGHTS } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,11 @@ import { FavoriteButton } from "@/components/shared/favorite-button";
 import { RISK_LEVEL_COLOR, RISK_LEVEL_LABEL } from "@/lib/labels";
 import { formatOdds } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
-import { CONFIDENCE_WEIGHTS } from "@/types";
+import { DownloadCardButton } from "@/components/shared/download-card-button";
+import { MarketFiveParametersTable } from "@/components/markets/market-five-parameters-table";
+import { getTeamMatchPool } from "@/data/team-history";
+import { getMatchById } from "@/data/matches";
+import { getTeamById } from "@/data/teams";
 
 const BREAKDOWN_LABELS: { key: keyof typeof CONFIDENCE_WEIGHTS; label: string }[] = [
   { key: "recentPerformance", label: "Rendimiento reciente" },
@@ -36,6 +40,9 @@ export function BestBetCard({ recommendation, matchLabel, analysisId }: BestBetC
   const [evidenceOpen, setEvidenceOpen] = React.useState(false);
   const [shared, setShared] = React.useState(false);
   const evaluation = recommendation.marketEvaluation;
+  const match = getMatchById(evaluation.matchId);
+  const homeTeam = match ? getTeamById(match.homeTeamId) : null;
+  const awayTeam = match ? getTeamById(match.awayTeamId) : null;
 
   async function handleShare() {
     const text = `BetAnalyzer — ${matchLabel}: ${evaluation.market.name} (${evaluation.confidence}% de confianza, orientativo).`;
@@ -55,21 +62,27 @@ export function BestBetCard({ recommendation, matchLabel, analysisId }: BestBetC
   }
 
   return (
-    <Card className="glow-green relative overflow-hidden border-brand-green/30 bg-gradient-to-br from-elevated to-card">
+    <Card className="glow-green card-download-target relative overflow-hidden border-brand-green/30 bg-gradient-to-br from-elevated to-card">
       <div className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-brand-green/10 blur-3xl" />
       <CardContent className="relative space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="flex items-center gap-2 text-sm font-semibold text-brand-green-bright">
             <Star className="size-4 fill-brand-green-bright" /> Mejor Bet
           </span>
-          <Badge variant="outline" className={cn("text-[10px]", RISK_LEVEL_COLOR[evaluation.riskLevel])}>
-            Riesgo: {RISK_LEVEL_LABEL[evaluation.riskLevel]}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={cn("text-[10px]", RISK_LEVEL_COLOR[evaluation.riskLevel])}>
+              Riesgo: {RISK_LEVEL_LABEL[evaluation.riskLevel]}
+            </Badge>
+            <DownloadCardButton filename={`mejor_bet_${evaluation.market.id}`} />
+          </div>
         </div>
 
-        <div>
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-brand-green/30 bg-brand-green/10 px-2.5 py-1 text-xs font-bold text-brand-green-bright shadow-sm">
+            <span>⚔️</span>
+            <span>{matchLabel}</span>
+          </div>
           <p className="text-xl font-bold text-foreground">{evaluation.market.name}</p>
-          <p className="text-sm text-muted-foreground">{matchLabel}</p>
         </div>
 
         <div className="grid grid-cols-1 items-center gap-5 sm:grid-cols-[auto_1fr]">
@@ -82,7 +95,7 @@ export function BestBetCard({ recommendation, matchLabel, analysisId }: BestBetC
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Prob. implícita</p>
-              <p className="text-lg font-bold text-foreground">{evaluation.odds?.impliedProbability.toFixed(2)}%</p>
+              <p className="text-lg font-bold text-foreground">{evaluation.odds ? `${evaluation.odds.impliedProbability.toFixed(2)}%` : "—"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Estim. BetAnalyzer</p>
@@ -90,7 +103,11 @@ export function BestBetCard({ recommendation, matchLabel, analysisId }: BestBetC
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Valor estimado</p>
-              {evaluation.valueLevel && <ValueIndicator level={evaluation.valueLevel} diff={evaluation.valueDifference} />}
+              {evaluation.valueLevel ? (
+                <ValueIndicator level={evaluation.valueLevel} diff={evaluation.valueDifference} />
+              ) : (
+                <p className="text-lg font-bold text-foreground">—</p>
+              )}
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Patrones coincidentes</p>
@@ -127,6 +144,16 @@ export function BestBetCard({ recommendation, matchLabel, analysisId }: BestBetC
             </ul>
           </div>
         </div>
+
+        {match && (
+          <MarketFiveParametersTable
+            marketId={evaluation.market.id}
+            homeRecords={getTeamMatchPool(match.homeTeamId)}
+            awayRecords={getTeamMatchPool(match.awayTeamId)}
+            homeTeamName={homeTeam?.shortName}
+            awayTeamName={awayTeam?.shortName}
+          />
+        )}
 
         <div className="flex flex-wrap gap-2 border-t border-border pt-4">
           <FavoriteButton

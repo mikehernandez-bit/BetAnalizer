@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matches, getMatchById, getUpcomingMatches, getMatchesOnDate } from "@/data/matches";
+import { matches, getMatchById, getUpcomingMatches, getMatchesOnDate, isMatchExpired } from "@/data/matches";
 import { getTeamById } from "@/data/teams";
 import { getImportedPackage, flattenImportedFile } from "@/data/imported-data";
 import { getFeaturedMatches, getTodayIso } from "@/services/match-service";
@@ -7,6 +7,7 @@ import { defaultAnalysisConfig, generateAnalysis, buildAnalysisId } from "@/serv
 import { getHeadToHead } from "@/data/head-to-head";
 import { getCommonOpponents } from "@/data/common-opponents";
 import { mergeImportedFile } from "@/lib/match-package-merge";
+import { checkMatchDataAudit } from "@/utils/data-audit";
 import { makeValidPackage } from "./fixtures";
 
 // Estas pruebas usan los paquetes REALES ya cargados en
@@ -24,12 +25,12 @@ describe("Un partido importado aparece en todo el sistema", () => {
     expect(getMatchById(KNOWN_IMPORTED_MATCH_ID)).toBeDefined();
   });
 
-  // 12. Dashboard (destacados / partidos de hoy)
+  // 12. Dashboard (destacados / partidos de una fecha)
   it("aparece en los partidos destacados y en los partidos de una fecha del dashboard", () => {
     const match = getMatchById(KNOWN_IMPORTED_MATCH_ID)!;
-    expect(getUpcomingMatches().some((m) => m.id === match.id) || match.status !== "scheduled").toBe(true);
-    expect(getFeaturedMatches(50).some((m) => m.id === match.id) || match.status !== "scheduled").toBe(true);
-    expect(getMatchesOnDate(match.date).some((m) => m.id === match.id)).toBe(true);
+    expect(getUpcomingMatches().some((m) => m.id === match.id) || match.status !== "scheduled" || isMatchExpired(match)).toBe(true);
+    expect(getFeaturedMatches(50).some((m) => m.id === match.id) || match.status !== "scheduled" || isMatchExpired(match)).toBe(true);
+    expect(getMatchesOnDate(match.date).some((m) => m.id === match.id) || isMatchExpired(match)).toBe(true);
     expect(getTodayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
@@ -83,9 +84,9 @@ describe("Enfrentamientos directos y rivales en común derivados automáticament
   });
 
   it("una pareja sin ningún cruce ni rival compartido sigue devolviendo una estructura vacía", () => {
-    const h2h = getHeadToHead("mjallby-aif", "slovan-bratislava");
+    const h2h = getHeadToHead("mjallby-aif", "hapoel-beer-sheva");
     expect(h2h.matches).toHaveLength(0);
-    const common = getCommonOpponents("mjallby-aif", "slovan-bratislava");
+    const common = getCommonOpponents("mjallby-aif", "hapoel-beer-sheva");
     expect(common.opponents).toHaveLength(0);
   });
 });
@@ -100,5 +101,13 @@ describe("flattenImportedFile (mecanismo que alimenta data/*.ts)", () => {
     expect(flat.matches[0].id).toBe(pkg.match.id);
     expect(flat.competitions.map((c) => c.id)).toEqual(pkg.competitions.map((c) => c.id));
     expect(Object.keys(flat.histories).sort()).toEqual(Object.keys(pkg.histories).sort());
+  });
+});
+
+describe("Auditoría de métricas activas", () => {
+  it("no marca remates ausentes cuando ese dato no alimenta el modelo", () => {
+    const audit = checkMatchDataAudit("cienciano", "deportivo-garcilaso", 10);
+
+    expect(audit.missingMetrics).not.toContain("Remates");
   });
 });

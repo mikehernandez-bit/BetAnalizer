@@ -1,12 +1,12 @@
 import rawPackages from "@/data/imported-analysis-packages.json";
 import type { Competition, Match, Team, TeamMatchRecord } from "@/types";
-import { importedFileSchema, type ImportedFile } from "@/lib/validation/match-package";
+import { importedFileSchema, removeLegacyHistoryAliases, type ImportedFile } from "@/lib/validation/match-package";
 import { mergeHistoriesMaps } from "@/lib/match-package-merge";
 
 // El esquema de validación vive en lib/validation/match-package.ts: lo usan
 // tanto esta carga estática (build time) como la ruta API de "Agregar
 // partido" (runtime), para no tener dos definiciones de la misma estructura.
-const importedFile = importedFileSchema.parse(rawPackages);
+const importedFile = importedFileSchema.parse(removeLegacyHistoryAliases(rawPackages));
 
 export function mergeById<T extends { id: string }>(base: T[], imported: T[]): T[] {
   return [...new Map([...base, ...imported].map((item) => [item.id, item])).values()];

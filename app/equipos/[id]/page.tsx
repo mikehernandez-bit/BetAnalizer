@@ -6,7 +6,7 @@ import { getFilteredTeamForm } from "@/services/team-service";
 import { getPatternsForTeam, getTeamBestMarkets } from "@/services/pattern-service";
 import { TeamProfileHeader } from "@/components/teams/team-profile-header";
 import { TeamStatSummary } from "@/components/analysis/team-stat-summary";
-import { TeamHistoryTable } from "@/components/analysis/team-history-table";
+import { TeamMatchList } from "@/components/analysis/team-match-list";
 import { PatternCard } from "@/components/patterns/pattern-card";
 import { MatchCard } from "@/components/matches/match-card";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -88,7 +88,7 @@ export default async function TeamProfilePage(props: PageProps<"/equipos/[id]">)
       <section>
         <SectionHeader title="Últimos partidos" />
         <div className="mt-4">
-          <TeamHistoryTable records={form.matches} />
+          <TeamMatchList team={team} records={form.matches} />
         </div>
       </section>
 

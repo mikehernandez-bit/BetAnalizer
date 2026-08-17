@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CROSS_PATTERN_STRENGTH_COLOR, CROSS_PATTERN_STRENGTH_LABEL } from "@/lib/labels";
 import { MARKET_CATEGORY_LABELS } from "@/data/markets";
 import { cn } from "@/lib/utils";
+import { DownloadCardButton } from "@/components/shared/download-card-button";
 
 export function CrossPatternCard({ pattern }: { pattern: CrossPattern }) {
   const teamA = getTeamById(pattern.teamAId);
@@ -15,16 +16,25 @@ export function CrossPatternCard({ pattern }: { pattern: CrossPattern }) {
   const combinedTotal = pattern.teamAStat.total + pattern.teamBStat.total;
 
   return (
-    <Card className={cn("overflow-hidden", isContradiction && "border-brand-red/25")}>
+    <Card className={cn("card-download-target overflow-hidden", isContradiction && "border-brand-red/25")}>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <Badge variant="outline" className="text-[10px] text-muted-foreground">
-            {MARKET_CATEGORY_LABELS[pattern.category] ?? pattern.category}
-          </Badge>
-          <Badge variant="outline" className={cn("gap-1 text-[10px]", CROSS_PATTERN_STRENGTH_COLOR[pattern.strength])}>
-            {isContradiction && <AlertTriangle className="size-3" />}
-            {CROSS_PATTERN_STRENGTH_LABEL[pattern.strength]}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <div className="inline-flex items-center gap-1 rounded-md border border-brand-green/30 bg-brand-green/10 px-2 py-0.5 text-[11px] font-bold text-brand-green-bright shadow-sm">
+              <span>⚔️</span>
+              <span>{teamA?.shortName ?? "Local"} vs {teamB?.shortName ?? "Visitante"}</span>
+            </div>
+            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+              {MARKET_CATEGORY_LABELS[pattern.category] ?? pattern.category}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Badge variant="outline" className={cn("gap-1 text-[10px]", CROSS_PATTERN_STRENGTH_COLOR[pattern.strength])}>
+              {isContradiction && <AlertTriangle className="size-3" />}
+              {CROSS_PATTERN_STRENGTH_LABEL[pattern.strength]}
+            </Badge>
+            <DownloadCardButton filename={`cruce_${pattern.id}`} />
+          </div>
         </div>
 
         <p className="text-sm font-semibold text-foreground">{pattern.marketLabel}</p>

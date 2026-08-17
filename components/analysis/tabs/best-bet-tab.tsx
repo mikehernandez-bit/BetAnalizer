@@ -30,7 +30,7 @@ export function BestBetTab({ analysis }: { analysis: AnalysisResult }) {
           <h3 className="text-base font-semibold text-foreground">Apuestas alternativas</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {analysis.alternatives.map((rec) => (
-              <MarketCard key={rec.id} evaluation={rec.marketEvaluation} />
+              <MarketCard key={rec.id} evaluation={rec.marketEvaluation} matchLabel={matchLabel} />
             ))}
           </div>
         </section>
@@ -45,7 +45,7 @@ export function BestBetTab({ analysis }: { analysis: AnalysisResult }) {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {analysis.avoid.map((evaluation) => (
-              <RiskCard key={evaluation.id} evaluation={evaluation} />
+              <RiskCard key={evaluation.id} evaluation={evaluation} matchLabel={matchLabel} />
             ))}
           </div>
         )}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { Match } from "@/types";
 import { getTeamById } from "@/data/teams";
 import { getCompetitionById } from "@/data/competitions";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MATCH_STATUS_LABEL, COMPETITION_TYPE_LABEL } from "@/lib/labels";
 import { formatDateShort } from "@/utils/formatters";
+import { checkMatchDataAudit } from "@/utils/data-audit";
 import { cn } from "@/lib/utils";
 
 const STATUS_BADGE: Record<Match["status"], string> = {
@@ -38,6 +40,7 @@ export function MatchTable({ matches }: { matches: Match[] }) {
               const away = getTeamById(match.awayTeamId);
               const competition = getCompetitionById(match.competitionId);
               if (!home || !away) return null;
+              const audit = checkMatchDataAudit(home.id, away.id, 10);
               return (
                 <TableRow key={match.id}>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
@@ -59,9 +62,20 @@ export function MatchTable({ matches }: { matches: Match[] }) {
                     {match.statistics ? `${match.statistics.homeGoals} - ${match.statistics.awayGoals}` : "—"}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn("text-[10px]", STATUS_BADGE[match.status])}>
-                      {MATCH_STATUS_LABEL[match.status]}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Badge variant="outline" className={cn("text-[10px]", STATUS_BADGE[match.status])}>
+                        {MATCH_STATUS_LABEL[match.status]}
+                      </Badge>
+                      {audit.hasIncompleteData && (
+                        <Badge
+                          variant="outline"
+                          className="border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 gap-1 text-[10px]"
+                          title={audit.summaryText}
+                        >
+                          <AlertTriangle className="size-2.5" /> Parcial
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild size="sm" variant="ghost">

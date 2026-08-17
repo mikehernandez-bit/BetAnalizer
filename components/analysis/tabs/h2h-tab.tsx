@@ -20,8 +20,8 @@ function buildDirectPatterns(h2h: HeadToHead, teamA: Team, teamB: Team): string[
   let teamACorners = 0;
   let bothScored = 0;
   h2h.matches.forEach((m) => {
-    const aCorners = m.homeTeamId === teamA.id ? m.homeCorners : m.awayCorners;
-    const bCorners = m.homeTeamId === teamA.id ? m.awayCorners : m.homeCorners;
+    const aCorners = (m.homeTeamId === teamA.id ? m.homeCorners : m.awayCorners) ?? 0;
+    const bCorners = (m.homeTeamId === teamA.id ? m.awayCorners : m.homeCorners) ?? 0;
     if (aCorners > bCorners) teamACorners += 1;
     if (m.homeGoals > 0 && m.awayGoals > 0) bothScored += 1;
   });
@@ -51,7 +51,7 @@ export function H2HTab({ headToHead, teamA, teamB }: { headToHead: HeadToHead; t
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="adaptive-stat-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard icon={Goal} label="Prom. goles" value={headToHead.summary.avgGoals.toFixed(1)} />
         <StatCard icon={CircleDot} label="Prom. córners" value={headToHead.summary.avgCorners.toFixed(1)} />
         <StatCard icon={Percent} label="Ambos marcan" value={`${headToHead.summary.bothScoredPct}%`} />

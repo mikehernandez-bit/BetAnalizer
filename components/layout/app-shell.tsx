@@ -13,7 +13,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
           <TopNavbar />
-          <main className="min-w-0 flex-1 px-4 py-6 md:px-6 lg:px-8">{children}</main>
+          <main className="app-main min-w-0 flex-1 px-4 py-6 pb-24 md:px-6 md:pb-6 lg:px-8">{children}</main>
           <Footer />
         </div>
       </div>

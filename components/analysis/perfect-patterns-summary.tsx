@@ -1,5 +1,7 @@
 import { AlertTriangle, BadgeCheck, Link2, ShieldCheck } from "lucide-react";
 import { AnalysisResult, Pattern, Team } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { getVenueConditionTag, cn } from "@/lib/utils";
 
 const RELIABLE_SAMPLE_SIZE = 10;
 
@@ -16,14 +18,32 @@ function IndividualPatternList({ patterns }: { patterns: Pattern[] }) {
 
   return (
     <div className="divide-y divide-border">
-      {patterns.map((pattern) => (
-        <div key={pattern.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
-          <p className="text-sm leading-5 text-foreground">{pattern.title}</p>
-          <span className="shrink-0 text-sm font-bold text-brand-green-bright">
-            {pattern.hits}/{pattern.total}
-          </span>
-        </div>
-      ))}
+      {patterns.map((pattern) => {
+        const venueTag = getVenueConditionTag(pattern.title);
+        return (
+          <div key={pattern.id} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+            <div className="space-y-1">
+              <p className="text-sm leading-5 text-foreground">{pattern.title}</p>
+              {venueTag && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5 border",
+                    venueTag.isHome
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                      : "border-sky-500/40 bg-sky-500/10 text-sky-400"
+                  )}
+                >
+                  {venueTag.isHome ? "🏠" : "✈️"} {venueTag.label}
+                </Badge>
+              )}
+            </div>
+            <span className="shrink-0 text-sm font-bold text-brand-green-bright">
+              {pattern.hits}/{pattern.total}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -36,13 +56,8 @@ export function PerfectPatternsSummary({ analysis, home, away }: PerfectPatterns
   const perfectAway = analysis.awayPatterns.filter((pattern) => pattern.percentage === 100);
   const totalPerfect = perfectCrosses.length + perfectHome.length + perfectAway.length;
 
-  const sampleSizes = [
-    ...perfectHome.map((p) => p.total),
-    ...perfectAway.map((p) => p.total),
-    ...perfectCrosses.flatMap((p) => [p.teamAStat.total, p.teamBStat.total]),
-  ];
-  const smallestSample = sampleSizes.length > 0 ? Math.min(...sampleSizes) : 0;
-  const isVolatile = smallestSample > 0 && smallestSample < RELIABLE_SAMPLE_SIZE;
+  const matchesAnalyzed = analysis.matchesAnalyzed ?? 10;
+  const isVolatile = matchesAnalyzed < RELIABLE_SAMPLE_SIZE;
 
   return (
     <section className="overflow-hidden rounded-lg border border-brand-green/30 bg-brand-green/5">
@@ -52,6 +67,10 @@ export function PerfectPatternsSummary({ analysis, home, away }: PerfectPatterns
             <BadgeCheck className="size-5" />
           </span>
           <div>
+            <div className="mb-1 inline-flex items-center gap-1.5 rounded-md border border-brand-green/30 bg-brand-green/10 px-2.5 py-0.5 text-xs font-bold text-brand-green-bright shadow-sm">
+              <span>⚔️</span>
+              <span>{home.shortName} vs {away.shortName}</span>
+            </div>
             <h2 className="text-base font-bold text-foreground">Patrones cumplidos al 100%</h2>
             <p className="text-xs text-muted-foreground">Primero se muestran las señales sin fallos en la muestra disponible.</p>
           </div>
@@ -75,7 +94,7 @@ export function PerfectPatternsSummary({ analysis, home, away }: PerfectPatterns
       <div className="grid grid-cols-1 divide-y divide-border lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         <div className="p-4 sm:p-5">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Link2 className="size-4 text-brand-green-bright" /> Cruces de ambos equipos
+            <Link2 className="size-4 text-brand-green-bright" /> Cruces ({home.shortName} vs {away.shortName})
           </h3>
           {perfectCrosses.length === 0 ? (
             <p className="text-sm text-muted-foreground">Ningún cruce alcanzó el 100%.</p>
@@ -101,14 +120,14 @@ export function PerfectPatternsSummary({ analysis, home, away }: PerfectPatterns
 
         <div className="p-4 sm:p-5">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ShieldCheck className="size-4 text-brand-blue" /> Equipo 1 · {home.shortName}
+            <ShieldCheck className="size-4 text-brand-blue" /> Local · {home.shortName}
           </h3>
           <IndividualPatternList patterns={perfectHome} />
         </div>
 
         <div className="p-4 sm:p-5">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ShieldCheck className="size-4 text-brand-blue" /> Equipo 2 · {away.shortName}
+            <ShieldCheck className="size-4 text-brand-blue" /> Visitante · {away.shortName}
           </h3>
           <IndividualPatternList patterns={perfectAway} />
         </div>

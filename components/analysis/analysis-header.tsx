@@ -74,7 +74,7 @@ export function AnalysisHeader({ analysis }: { analysis: AnalysisResult }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-4 sm:grid-cols-4">
+        <div className="adaptive-stat-grid grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-4 sm:grid-cols-4">
           <div className="text-center">
             <p className="text-[11px] text-muted-foreground">Confianza general</p>
             <div className="mt-1 flex justify-center">

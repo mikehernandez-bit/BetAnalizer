@@ -191,4 +191,33 @@ describe("validateImportBatch", () => {
     const result = validateImportBatch(makeValidFilePayload([pkg as never]));
     expect(result.success).toBe(false);
   });
+
+  // Goles por tiempo (opcionales, pero consistentes si se incluyen)
+  it("acepta un registro con desglose de goles por tiempo cuando suma correctamente", () => {
+    const pkg = makeValidPackage();
+    const teamId = pkg.teams[0].id;
+    pkg.histories[teamId][0] = {
+      ...pkg.histories[teamId][0],
+      goalsFor: 3,
+      goalsForFirstHalf: 1,
+      goalsForSecondHalf: 2,
+    };
+    expect(validateImportBatch(makeValidFilePayload([pkg])).success).toBe(true);
+  });
+
+  it("rechaza un desglose de goles por tiempo que no suma el total", () => {
+    const pkg = makeValidPackage();
+    const teamId = pkg.teams[0].id;
+    pkg.histories[teamId][0] = {
+      ...pkg.histories[teamId][0],
+      goalsFor: 3,
+      goalsForFirstHalf: 1,
+      goalsForSecondHalf: 1, // 1+1=2, no 3
+    };
+    const result = validateImportBatch(makeValidFilePayload([pkg]));
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.issues.some((i) => i.message.includes("goalsForFirstHalf"))).toBe(true);
+    }
+  });
 });

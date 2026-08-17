@@ -10,11 +10,12 @@ import { JsonInputPanel } from "@/components/import/json-input-panel";
 import { ValidationIssuesList } from "@/components/import/validation-issues-list";
 import { ImportPreview } from "@/components/import/import-preview";
 import { ImportedPackagesPanel } from "@/components/import/imported-packages-panel";
+import { ApiFootballPanel } from "@/components/import/api-football-panel";
 import type { MatchPackage } from "@/lib/validation/match-package";
 
 export function AddMatchWorkspace() {
   const importState = useMatchImport();
-  const [tab, setTab] = React.useState("prompt");
+  const [tab, setTab] = React.useState("api");
 
   React.useEffect(() => {
     void importState.loadCurrentFile();
@@ -27,14 +28,24 @@ export function AddMatchWorkspace() {
     setTab("importar");
   }
 
+  function handleApiPackage(pkg: MatchPackage) {
+    importState.loadPackageForEditing(pkg);
+    setTab("importar");
+  }
+
   return (
     <div className="space-y-6">
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
+          <TabsTrigger value="api">Consultar API</TabsTrigger>
           <TabsTrigger value="prompt">Prompt y ejemplo</TabsTrigger>
           <TabsTrigger value="importar">Importar / editar JSON</TabsTrigger>
           <TabsTrigger value="paquetes">Paquetes importados ({importState.currentFile?.packages.length ?? 0})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="api" className="mt-4">
+          <ApiFootballPanel onPackageReady={handleApiPackage} />
+        </TabsContent>
 
         <TabsContent value="prompt" className="mt-4">
           <PromptExamplePanel />

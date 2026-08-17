@@ -22,11 +22,15 @@ export type MarketCategory =
   | "resultado"
   | "ambos_marcan"
   | "primera_parte"
+  | "segunda_parte"
   | "equipo_local"
   | "equipo_visitante";
 export type MarketRecommendationState = "recomendado" | "evitar" | "sin_datos_suficientes";
 export type FavoriteType = "match" | "team" | "market" | "analysis" | "pattern";
 export type AnalysisStatus = "ganada" | "perdida" | "pendiente" | "anulada";
+export type BetSelectionStatus = "pendiente" | "acertada" | "fallida" | "sin_datos";
+export type TicketTier = 70 | 80 | 90;
+export type PredictedWinner = "local" | "empate" | "visitante";
 
 // ----------------------------------------------------------------------------
 // Competition & Team
@@ -133,13 +137,22 @@ export interface TeamMatchRecord {
   result: ResultLetter;
   goalsFor: number;
   goalsAgainst: number;
+  /**
+   * Desglose de goles por tiempo — opcionales porque no todas las fuentes
+   * publican el resultado al descanso. Cuando están, deben sumar goalsFor /
+   * goalsAgainst respectivamente.
+   */
+  goalsForFirstHalf?: number;
+  goalsForSecondHalf?: number;
+  goalsAgainstFirstHalf?: number;
+  goalsAgainstSecondHalf?: number;
   cornersFor: number;
   cornersAgainst: number;
-  shotsFor: number;
-  shotsAgainst: number;
-  shotsOnTargetFor: number;
-  shotsOnTargetAgainst: number;
-  possession: number;
+  shotsFor?: number;
+  shotsAgainst?: number;
+  shotsOnTargetFor?: number;
+  shotsOnTargetAgainst?: number;
+  possession?: number;
   yellowCards: number;
   redCards: number;
   /**
@@ -181,10 +194,10 @@ export interface H2HMatchRecord {
   awayTeamId: string;
   homeGoals: number;
   awayGoals: number;
-  homeCorners: number;
-  awayCorners: number;
-  homeShotsOnTarget: number;
-  awayShotsOnTarget: number;
+  homeCorners?: number;
+  awayCorners?: number;
+  homeShotsOnTarget?: number;
+  awayShotsOnTarget?: number;
   cards: number;
 }
 
@@ -216,10 +229,10 @@ export interface CommonOpponentSide {
   result: ResultLetter;
   goalsFor: number;
   goalsAgainst: number;
-  corners: number;
-  shots: number;
-  shotsOnTarget: number;
-  possession: number;
+  corners?: number;
+  shots?: number;
+  shotsOnTarget?: number;
+  possession?: number;
 }
 
 export interface CommonOpponent {
@@ -304,6 +317,38 @@ export interface BettingOdds {
   impliedProbability: number;
 }
 
+export interface MarketSignal {
+  label: string;
+  value: string;
+  detail?: string;
+}
+
+export interface MarketEvidenceMatch {
+  matchId: string;
+  date: string;
+  opponent: string;
+  venue: MatchCondition;
+  result: ResultLetter;
+  score: string;
+  statistics: string;
+  fulfilled: boolean;
+}
+
+export interface MarketEvidenceSeries {
+  id: string;
+  title: string;
+  description: string;
+  hits: number;
+  total: number;
+  percentage: number;
+  matches: MarketEvidenceMatch[];
+}
+
+export interface MarketEvidence {
+  methodology: string[];
+  series: MarketEvidenceSeries[];
+}
+
 export interface ConfidenceBreakdown {
   recentPerformance: number;
   rivalVulnerability: number;
@@ -339,6 +384,8 @@ export interface MarketEvaluation {
   valueLevel?: ValueLevel;
   riskLevel: RiskLevel;
   positivePatterns: string[];
+  probabilitySignals?: MarketSignal[];
+  evidence?: MarketEvidence;
   contradictions: string[];
   dataQuality: DataQuality;
   sampleSize: number;
@@ -433,6 +480,81 @@ export interface SavedAnalysis {
   result?: string;
   date: string;
   savedAt: string;
+}
+
+// ----------------------------------------------------------------------------
+// Registro de predicciones / apuestas
+// ----------------------------------------------------------------------------
+
+/** Resultado verificable introducido una vez que el encuentro terminó. */
+export interface RecordedMatchOutcome {
+  homeGoals: number;
+  awayGoals: number;
+  homeGoalsFirstHalf?: number;
+  awayGoalsFirstHalf?: number;
+  homeCorners?: number;
+  awayCorners?: number;
+  homeYellowCards?: number;
+  awayYellowCards?: number;
+  homeRedCards?: number;
+  awayRedCards?: number;
+  recordedAt: string;
+}
+
+/** Foto inmutable de un mercado incluido en un ticket. */
+export interface TrackedBetSelection {
+  id: string;
+  marketId: string;
+  marketName: string;
+  category: MarketCategory;
+  probability: number;
+  confidence: number;
+  sampleSize: number;
+  recommendation: MarketRecommendationState;
+  /** Equipo favorecido en mercados cuyo nombre no expresa el lado, p.ej. "más córners". */
+  targetSide?: "home" | "away";
+  evidence: string[];
+  status: BetSelectionStatus;
+  settledAt?: string;
+  settlementNote?: string;
+}
+
+/** Resultado 1X2 que el modelo tenía al crear el ticket. */
+export interface TicketWinnerPrediction {
+  outcome: PredictedWinner;
+  label: string;
+  probability: number;
+  homeWinProbability: number;
+  drawProbability: number;
+  awayWinProbability: number;
+  correct?: boolean;
+}
+
+/** Un encuentro perteneciente a un ticket guardado. */
+export interface TrackedTicketMatch {
+  matchId: string;
+  competition: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  date: string;
+  time: string;
+  status: AnalysisStatus;
+  selections: TrackedBetSelection[];
+  winnerPrediction?: TicketWinnerPrediction;
+  outcome?: RecordedMatchOutcome;
+  settledAt?: string;
+}
+
+/** Foto inmutable de un ticket generado con uno de los niveles blindados. */
+export interface TrackedTicket {
+  id: string;
+  tier: TicketTier;
+  minConfidence: number;
+  minProbability: number;
+  modelVersion: string;
+  createdAt: string;
+  status: AnalysisStatus;
+  matches: TrackedTicketMatch[];
 }
 
 // ----------------------------------------------------------------------------

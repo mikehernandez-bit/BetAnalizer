@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Database } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarDays, Database } from "lucide-react";
 import { Match } from "@/types";
 import { getCompetitionById } from "@/data/competitions";
 import { getTeamById } from "@/data/teams";
@@ -9,6 +9,8 @@ import { TeamBadge } from "@/components/shared/team-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { relativeDayLabel } from "@/utils/formatters";
+import { checkMatchDataAudit } from "@/utils/data-audit";
+import { DownloadCardButton } from "@/components/shared/download-card-button";
 
 export function AnalyzedMatchCard({ match }: { match: Match }) {
   const home = getTeamById(match.homeTeamId);
@@ -21,13 +23,28 @@ export function AnalyzedMatchCard({ match }: { match: Match }) {
   const perfectCrosses =
     analysis?.crossPatterns.filter((pattern) => pattern.teamAStat.percentage === 100 && pattern.teamBStat.percentage === 100).length ?? 0;
 
+  const audit = checkMatchDataAudit(home.id, away.id, 10);
+
   return (
     <Link href={`/analisis/${analysisId}`} className="group">
-      <Card className="h-full transition-colors group-hover:border-brand-green/35">
+      <Card className="card-download-target h-full transition-colors group-hover:border-brand-green/35">
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
             <span className="truncate">{competition?.shortName ?? match.competitionId}</span>
-            <Badge variant="outline" className="shrink-0">Cargado</Badge>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {audit.hasIncompleteData ? (
+                <Badge
+                  variant="outline"
+                  className="border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400 gap-1 text-[10px] font-medium shrink-0"
+                  title={audit.summaryText}
+                >
+                  <AlertTriangle className="size-3" /> Datos parciales
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="shrink-0">Cargado</Badge>
+              )}
+              <DownloadCardButton filename={`analisis_${home.id}_vs_${away.id}`} />
+            </div>
           </div>
 
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
@@ -38,6 +55,15 @@ export function AnalyzedMatchCard({ match }: { match: Match }) {
           <p className="text-center text-sm font-semibold text-foreground">
             {home.shortName} vs {away.shortName}
           </p>
+
+          {audit.hasIncompleteData && (
+            <div className="flex items-center gap-1.5 rounded-md bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="size-3.5 shrink-0" />
+              <span className="truncate">
+                Muestras parciales ({audit.missingMetrics.join(", ")}) en {audit.incompleteTeamNames.join(" y ")}
+              </span>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2 border-y border-border py-3 text-xs">
             <span className="flex items-center gap-1.5 text-muted-foreground">

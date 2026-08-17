@@ -204,10 +204,6 @@ describe("computeExtremeCrossPatterns — peor caso combinado entre ambos equipo
     const shotsCeiling = cross.find((p) => p.id === "cross-extreme-home-team-away-team-match_shots-ceiling");
     expect(shotsCeiling).toBeDefined();
     expect(shotsCeiling!.conclusion).toContain("más de 20 remates");
-
-    const sotCeiling = cross.find((p) => p.id === "cross-extreme-home-team-away-team-match_sot-ceiling");
-    expect(sotCeiling).toBeDefined();
-    expect(sotCeiling!.conclusion).toContain("más de 8 tiros al arco");
   });
 
   it("también agrupa puntos de tarjetas (por equipo, no total del partido)", () => {

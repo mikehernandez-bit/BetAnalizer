@@ -10,7 +10,7 @@ export function SummaryStats({ summary }: { summary: DashboardSummary }) {
   const savedMarkets = byType("market").length;
 
   return (
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <section className="adaptive-stat-grid grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <StatCard icon={CalendarCheck} label="Partidos hoy" value={String(summary.matchesToday)} accent="blue" />
       <StatCard icon={ClipboardList} label="Análisis realizados" value={String(summary.analysesDone)} accent="neutral" />
       <StatCard icon={Sparkles} label="Patrones fuertes" value={String(summary.strongPatterns)} accent="yellow" />

@@ -5,7 +5,7 @@ import { Check, Copy, FileJson, MessageSquareText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExportButton } from "@/components/shared/export-button";
-import { MATCH_PACKAGE_PROMPT, MATCH_PACKAGE_EXAMPLE_JSON } from "@/lib/match-package-prompt";
+import { getStrictMatchPackagePrompt, MATCH_PACKAGE_EXAMPLE_JSON } from "@/lib/match-package-prompt";
 
 function CopyButton({ getText, label }: { getText: () => string; label: string }) {
   const [copied, setCopied] = React.useState(false);
@@ -29,6 +29,8 @@ function CopyButton({ getText, label }: { getText: () => string; label: string }
 }
 
 export function PromptExamplePanel() {
+  const strictPrompt = React.useMemo(() => getStrictMatchPackagePrompt(), []);
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
@@ -45,9 +47,9 @@ export function PromptExamplePanel() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <CopyButton getText={() => MATCH_PACKAGE_PROMPT} label="Copiar prompt" />
+          <CopyButton getText={() => strictPrompt} label="Copiar prompt" />
           <pre className="max-h-72 overflow-auto rounded-lg bg-muted/50 p-3 text-[11px] leading-relaxed whitespace-pre-wrap text-muted-foreground">
-            {MATCH_PACKAGE_PROMPT}
+            {strictPrompt}
           </pre>
         </CardContent>
       </Card>

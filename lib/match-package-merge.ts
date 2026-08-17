@@ -42,12 +42,23 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   return stableStringify(a) === stableStringify(b);
 }
 
-/** Fusiona dos listas de historial por `matchId` (el más nuevo gana) y ordena desc. por fecha. */
+/** Fusiona dos listas de historial por fecha (o `matchId` de respaldo, el más nuevo gana) y ordena desc. por fecha. */
 export function mergeHistoryRecords(oldRecords: HistoryRecord[], newRecords: HistoryRecord[]): HistoryRecord[] {
-  const byId = new Map<string, HistoryRecord>();
-  oldRecords.forEach((record) => byId.set(record.matchId, record));
-  newRecords.forEach((record) => byId.set(record.matchId, record));
-  return [...byId.values()].sort((a, b) => {
+  const byKey = new Map<string, HistoryRecord>();
+  oldRecords.forEach((record) => {
+    const key = record.date || record.matchId;
+    byKey.set(key, record);
+  });
+  newRecords.forEach((record) => {
+    const key = record.date || record.matchId;
+    const existing = byKey.get(key);
+    if (existing) {
+      byKey.set(key, { ...existing, ...record });
+    } else {
+      byKey.set(key, record);
+    }
+  });
+  return [...byKey.values()].sort((a, b) => {
     if (a.date !== b.date) return a.date < b.date ? 1 : -1;
     return a.matchId < b.matchId ? 1 : -1;
   });

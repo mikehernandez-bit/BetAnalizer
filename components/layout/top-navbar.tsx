@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Moon, Search, Settings, Sun, User } from "lucide-react";
+import { Bell, Moon, PanelLeftClose, PanelLeftOpen, Search, Settings, Sun, User } from "lucide-react";
 import { MobileDrawer } from "@/components/layout/mobile-navbar";
 import { useAppState } from "@/lib/app-context";
 import { useTheme } from "@/lib/theme-provider";
@@ -50,7 +50,7 @@ export function TopNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const meta = getPageMeta(pathname);
-  const { competitionId, setCompetitionId, dateIso, setDateIso } = useAppState();
+  const { competitionId, setCompetitionId, dateIso, setDateIso, sidebarCollapsed, toggleSidebar } = useAppState();
   const { theme, toggleTheme } = useTheme();
   const [search, setSearch] = React.useState("");
 
@@ -63,6 +63,17 @@ export function TopNavbar() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-surface/90 px-4 backdrop-blur md:px-6">
       <MobileDrawer />
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleSidebar}
+        className="hidden size-9 text-muted-foreground hover:bg-accent hover:text-foreground md:flex"
+        aria-label={sidebarCollapsed ? "Desplegar barra lateral" : "Ocultar barra lateral"}
+        title={sidebarCollapsed ? "Desplegar barra lateral" : "Ocultar barra lateral"}
+      >
+        {sidebarCollapsed ? <PanelLeftOpen className="size-5 text-brand-green" /> : <PanelLeftClose className="size-5" />}
+      </Button>
 
       <div className="min-w-0 flex-1">
         <h1 className="truncate text-base font-semibold text-foreground md:text-lg">{meta.title}</h1>

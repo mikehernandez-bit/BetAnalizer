@@ -19,7 +19,7 @@ export function CommonOpponentsTab({ data, teamA, teamB }: { data: CommonOpponen
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="adaptive-stat-grid grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard icon={TrendingUp} label="Mejor rendimiento" value={better?.shortName ?? "Parejo"} accent="green" />
         <StatCard icon={Gauge} label="Diferencia promedio" value={data.summary.avgDifference.toFixed(1)} />
         <StatCard icon={Layers} label="Coincidencias" value={String(data.summary.matchesCount)} />
@@ -51,7 +51,7 @@ export function CommonOpponentsTab({ data, teamA, teamB }: { data: CommonOpponen
                         </span>
                       </p>
                       <p className="mt-1 text-muted-foreground">
-                        Córners {side.corners} · Remates {side.shots} · TA {side.shotsOnTarget} · Pos. {side.possession}%
+                        Córners {side.corners} · Remates {side.shots} · TA {side.shotsOnTarget !== undefined ? side.shotsOnTarget : "-"} · Pos. {side.possession !== undefined ? `${side.possession}%` : "-"}
                       </p>
                     </div>
                   ))}

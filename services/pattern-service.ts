@@ -65,6 +65,19 @@ const MARKET_ID_BY_TEMPLATE: Record<string, string> = {
   corners_for_gt35: "corners_home_over_35",
   sot_for_ge4: "sot_home_over_35",
   shots_for_ge9: "shots_home_over_85",
+  cards_for_gt05: "cards_home_over_05",
+  cards_for_gt15: "cards_home_over_15",
+  cards_for_gt25: "cards_home_over_25",
+  cards_btts_match: "cards_btts",
+  first_half_match_over05: "first_half_over_05",
+  first_half_btts_match: "first_half_btts",
+  second_half_match_over05: "second_half_over_05",
+  second_half_btts_match: "second_half_btts",
+  cards_total_match_over15: "cards_total_over_15",
+  cards_total_match_over25: "cards_total_over_25",
+  cards_total_match_over35: "cards_total_over_35",
+  cards_total_match_over45: "cards_total_over_45",
+  red_card_match_ge1: "red_card_shown",
 };
 
 export async function fetchCrossPatterns(

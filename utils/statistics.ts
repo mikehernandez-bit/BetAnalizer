@@ -26,21 +26,24 @@ const STAT_KEYS: StatKey[] = [
 ];
 
 export function mean(values: number[]): number {
-  if (values.length === 0) return 0;
-  return values.reduce((sum, v) => sum + v, 0) / values.length;
+  const valid = values.filter((v) => typeof v === "number" && !isNaN(v) && v !== null && v !== undefined);
+  if (valid.length === 0) return 0;
+  return valid.reduce((sum, v) => sum + v, 0) / valid.length;
 }
 
 export function median(values: number[]): number {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
+  const valid = values.filter((v) => typeof v === "number" && !isNaN(v) && v !== null && v !== undefined);
+  if (valid.length === 0) return 0;
+  const sorted = [...valid].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
 export function stdDev(values: number[]): number {
-  if (values.length < 2) return 0;
-  const avg = mean(values);
-  const variance = mean(values.map((v) => (v - avg) ** 2));
+  const valid = values.filter((v) => typeof v === "number" && !isNaN(v) && v !== null && v !== undefined);
+  if (valid.length < 2) return 0;
+  const avg = mean(valid);
+  const variance = mean(valid.map((v) => (v - avg) ** 2));
   return Math.sqrt(variance);
 }
 
@@ -50,31 +53,33 @@ export function round1(value: number): number {
 
 /** records must be ordered most-recent-first. */
 function trendFor(values: number[]): TrendDirection {
-  if (values.length < 4) return "estable";
-  const half = Math.floor(values.length / 2);
-  const recent = mean(values.slice(0, half));
-  const older = mean(values.slice(half));
+  const valid = values.filter((v) => typeof v === "number" && !isNaN(v) && v !== null && v !== undefined);
+  if (valid.length < 4) return "estable";
+  const half = Math.floor(valid.length / 2);
+  const recent = mean(valid.slice(0, half));
+  const older = mean(valid.slice(half));
   const delta = recent - older;
-  const threshold = Math.max(0.25, mean(values) * 0.12);
+  const threshold = Math.max(0.25, mean(valid) * 0.12);
   if (delta > threshold) return "ascendente";
   if (delta < -threshold) return "descendente";
   return "estable";
 }
 
 export function aggregateStat(values: number[]): StatDistribution {
+  const valid = values.filter((v) => typeof v === "number" && !isNaN(v) && v !== null && v !== undefined);
   return {
-    average: round1(mean(values)),
-    median: round1(median(values)),
-    max: values.length ? Math.max(...values) : 0,
-    min: values.length ? Math.min(...values) : 0,
-    stdDev: round1(stdDev(values)),
-    trend: trendFor(values),
+    average: round1(mean(valid)),
+    median: round1(median(valid)),
+    max: valid.length ? Math.max(...valid) : 0,
+    min: valid.length ? Math.min(...valid) : 0,
+    stdDev: round1(stdDev(valid)),
+    trend: trendFor(valid),
   };
 }
 
 export function buildTeamForm(teamId: string, records: TeamMatchRecord[]): TeamForm {
   const stats = STAT_KEYS.reduce((acc, key) => {
-    acc[key] = aggregateStat(records.map((r) => r[key]));
+    acc[key] = aggregateStat(records.map((r) => r[key] ?? 0));
     return acc;
   }, {} as Record<StatKey, StatDistribution>);
 
@@ -99,6 +104,20 @@ export interface PatternTemplate {
   title: (hits: number, total: number) => string;
   predicate: (record: TeamMatchRecord) => boolean;
   marketId?: string;
+  /**
+   * Algunos campos (goles por tiempo, tarjetas del rival) son opcionales en
+   * TeamMatchRecord porque rara vez están disponibles en la fuente — ver
+   * lib/match-package-prompt.ts. Un patrón basado en esos campos NO puede
+   * usar "records.length" como total: un partido sin el dato no es un fallo
+   * del patrón, es un partido sin muestra. `sampleFilter` reduce la muestra
+   * a los registros donde el dato realmente existe antes de calcular
+   * hits/total; sin este filtro, "undefined" se leería como "no cumplió" y
+   * el porcentaje quedaría artificialmente bajo. Si no se define, se usa
+   * toda la muestra (comportamiento de siempre).
+   */
+  sampleFilter?: (record: TeamMatchRecord) => boolean;
+  /** Mínimo de registros CON el dato (tras sampleFilter) para mostrar el patrón. Default: 4. */
+  minApplicable?: number;
 }
 
 const MATCH_CORNERS_THRESHOLDS = [6.5, 7.5, 8.5, 9.5, 10.5, 11.5] as const;
@@ -113,7 +132,7 @@ const MATCH_CORNERS_PATTERN_TEMPLATES: PatternTemplate[] = MATCH_CORNERS_THRESHO
   category: "corners",
   direction: "match",
   title: (h, t) => `Hubo más de ${threshold} córners en ${h} de ${t} partidos`,
-  predicate: (r) => r.cornersFor + r.cornersAgainst > threshold,
+  predicate: (r) => (r.cornersFor ?? 0) + (r.cornersAgainst ?? 0) > threshold,
   marketId: `corners_over_${thresholdId(threshold)}`,
 }));
 
@@ -122,7 +141,7 @@ const MATCH_CORNERS_UNDER_PATTERN_TEMPLATES: PatternTemplate[] = MATCH_CORNERS_U
   category: "corners",
   direction: "match",
   title: (h, t) => `Hubo menos de ${threshold} córners en ${h} de ${t} partidos`,
-  predicate: (r) => r.cornersFor + r.cornersAgainst < threshold,
+  predicate: (r) => (r.cornersFor ?? 0) + (r.cornersAgainst ?? 0) < threshold,
   marketId: `corners_under_${thresholdId(threshold)}`,
 }));
 
@@ -172,7 +191,7 @@ export const PATTERN_TEMPLATES: PatternTemplate[] = [
     category: "corners",
     direction: "for",
     title: (h, t) => `Superó 4.5 córners a favor en ${h} de ${t} partidos`,
-    predicate: (r) => r.cornersFor > 4.5,
+    predicate: (r) => (r.cornersFor ?? 0) > 4.5,
     marketId: "corners_home_over_45",
   },
   {
@@ -180,7 +199,7 @@ export const PATTERN_TEMPLATES: PatternTemplate[] = [
     category: "corners",
     direction: "for",
     title: (h, t) => `Superó 3.5 córners a favor en ${h} de ${t} partidos`,
-    predicate: (r) => r.cornersFor > 3.5,
+    predicate: (r) => (r.cornersFor ?? 0) > 3.5,
     marketId: "corners_home_over_35",
   },
   {
@@ -188,44 +207,231 @@ export const PATTERN_TEMPLATES: PatternTemplate[] = [
     category: "corners",
     direction: "against",
     title: (h, t) => `Concedió más de 4.5 córners en ${h} de ${t} partidos`,
-    predicate: (r) => r.cornersAgainst > 4.5,
+    predicate: (r) => (r.cornersAgainst ?? 0) > 4.5,
   },
   {
     id: "corners_against_gt35",
     category: "corners",
     direction: "against",
     title: (h, t) => `Concedió más de 3.5 córners en ${h} de ${t} partidos`,
-    predicate: (r) => r.cornersAgainst > 3.5,
-  },
-  {
-    id: "sot_for_ge4",
-    category: "tiros_arco",
-    direction: "for",
-    title: (h, t) => `Realizó al menos 4 tiros al arco en ${h} de ${t} partidos`,
-    predicate: (r) => r.shotsOnTargetFor >= 4,
-    marketId: "sot_home_over_35",
-  },
-  {
-    id: "sot_against_ge4",
-    category: "tiros_arco",
-    direction: "against",
-    title: (h, t) => `Permitió al menos 4 tiros al arco en ${h} de ${t} partidos`,
-    predicate: (r) => r.shotsOnTargetAgainst >= 4,
-  },
-  {
-    id: "sot_for_lt45",
-    category: "tiros_arco",
-    direction: "for",
-    title: (h, t) => `Realizó menos de 4.5 tiros al arco en ${h} de ${t} partidos`,
-    predicate: (r) => r.shotsOnTargetFor < 4.5,
+    predicate: (r) => (r.cornersAgainst ?? 0) > 3.5,
   },
   {
     id: "shots_for_ge9",
     category: "remates",
     direction: "for",
     title: (h, t) => `Superó los 8.5 remates en ${h} de ${t} partidos`,
-    predicate: (r) => r.shotsFor > 8.5,
+    predicate: (r) => (r.shotsFor ?? 0) > 8.5,
     marketId: "shots_home_over_85",
+  },
+
+  // Primera parte — goles ----------------------------------------------------
+  {
+    id: "first_half_for_ge1",
+    category: "primera_parte",
+    direction: "for",
+    title: (h, t) => `Marcó en el primer tiempo (+0.5 1T) en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForFirstHalf ?? 0) >= 1,
+    marketId: "first_half_home_over_05",
+  },
+  {
+    id: "first_half_against_ge1",
+    category: "primera_parte",
+    direction: "against",
+    title: (h, t) => `Recibió gol en el primer tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsAgainstFirstHalf ?? 0) >= 1,
+  },
+  {
+    id: "first_half_match_over05",
+    category: "primera_parte",
+    direction: "match",
+    title: (h, t) => `Hubo más de 0.5 goles en el primer tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForFirstHalf ?? 0) + (r.goalsAgainstFirstHalf ?? 0) > 0.5,
+    marketId: "first_half_over_05",
+  },
+  {
+    id: "first_half_match_over15",
+    category: "primera_parte",
+    direction: "match",
+    title: (h, t) => `Hubo más de 1.5 goles totales (ambos equipos) en el primer tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForFirstHalf ?? 0) + (r.goalsAgainstFirstHalf ?? 0) > 1.5,
+    marketId: "first_half_over_15",
+  },
+  {
+    id: "first_half_match_under25",
+    category: "primera_parte",
+    direction: "match",
+    title: (h, t) => `Hubo menos de 2.5 goles totales (ambos equipos) en el primer tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => r.goalsForFirstHalf !== undefined && r.goalsAgainstFirstHalf !== undefined && r.goalsForFirstHalf + r.goalsAgainstFirstHalf < 2.5,
+    marketId: "first_half_under_25",
+  },
+  {
+    id: "first_half_match_under35",
+    category: "primera_parte",
+    direction: "match",
+    title: (h, t) => `Hubo menos de 3.5 goles totales (ambos equipos) en el primer tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => r.goalsForFirstHalf !== undefined && r.goalsAgainstFirstHalf !== undefined && r.goalsForFirstHalf + r.goalsAgainstFirstHalf < 3.5,
+    marketId: "first_half_under_35",
+  },
+  {
+    id: "first_half_btts_match",
+    category: "primera_parte",
+    direction: "match",
+    title: (h, t) => `Ambos equipos marcaron en el primer tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForFirstHalf ?? 0) >= 1 && (r.goalsAgainstFirstHalf ?? 0) >= 1,
+    marketId: "first_half_btts",
+  },
+
+  // Segunda parte — goles ------------------------------------------------
+  {
+    id: "second_half_for_ge1",
+    category: "segunda_parte",
+    direction: "for",
+    title: (h, t) => `Marcó en el segundo tiempo (+0.5 2T) en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForSecondHalf ?? 0) >= 1,
+    marketId: "second_half_home_over_05",
+  },
+  {
+    id: "second_half_against_ge1",
+    category: "segunda_parte",
+    direction: "against",
+    title: (h, t) => `Recibió gol en el segundo tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsAgainstSecondHalf ?? 0) >= 1,
+  },
+  {
+    id: "second_half_match_over05",
+    category: "segunda_parte",
+    direction: "match",
+    title: (h, t) => `Hubo más de 0.5 goles en el segundo tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForSecondHalf ?? 0) + (r.goalsAgainstSecondHalf ?? 0) > 0.5,
+    marketId: "second_half_over_05",
+  },
+  {
+    id: "second_half_match_over15",
+    category: "segunda_parte",
+    direction: "match",
+    title: (h, t) => `Hubo más de 1.5 goles totales (ambos equipos) en el segundo tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForSecondHalf ?? 0) + (r.goalsAgainstSecondHalf ?? 0) > 1.5,
+    marketId: "second_half_over_15",
+  },
+  {
+    id: "second_half_match_under25",
+    category: "segunda_parte",
+    direction: "match",
+    title: (h, t) => `Hubo menos de 2.5 goles totales (ambos equipos) en el segundo tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => r.goalsForSecondHalf !== undefined && r.goalsAgainstSecondHalf !== undefined && r.goalsForSecondHalf + r.goalsAgainstSecondHalf < 2.5,
+    marketId: "second_half_under_25",
+  },
+  {
+    id: "second_half_match_under35",
+    category: "segunda_parte",
+    direction: "match",
+    title: (h, t) => `Hubo menos de 3.5 goles totales (ambos equipos) en el segundo tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => r.goalsForSecondHalf !== undefined && r.goalsAgainstSecondHalf !== undefined && r.goalsForSecondHalf + r.goalsAgainstSecondHalf < 3.5,
+    marketId: "second_half_under_35",
+  },
+  {
+    id: "second_half_btts_match",
+    category: "segunda_parte",
+    direction: "match",
+    title: (h, t) => `Ambos equipos marcaron en el segundo tiempo en ${h} de ${t} partidos`,
+    predicate: (r) => (r.goalsForSecondHalf ?? 0) >= 1 && (r.goalsAgainstSecondHalf ?? 0) >= 1,
+    marketId: "second_half_btts",
+  },
+
+  // Tarjetas ------------------------------------------------------------
+  {
+    id: "cards_for_gt05",
+    category: "tarjetas",
+    direction: "for",
+    title: (h, t) => `Recibió más de 0.5 tarjetas amarillas en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) > 0.5,
+    marketId: "cards_home_over_05",
+  },
+  {
+    id: "cards_for_gt15",
+    category: "tarjetas",
+    direction: "for",
+    title: (h, t) => `Recibió más de 1.5 tarjetas amarillas en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) > 1.5,
+    marketId: "cards_home_over_15",
+  },
+  {
+    id: "cards_for_gt25",
+    category: "tarjetas",
+    direction: "for",
+    title: (h, t) => `Recibió más de 2.5 tarjetas amarillas en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) > 2.5,
+    marketId: "cards_home_over_25",
+  },
+  {
+    id: "cards_against_gt05",
+    category: "tarjetas",
+    direction: "against",
+    title: (h, t) => `El rival recibió más de 0.5 tarjetas amarillas en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCardsAgainst ?? 0) > 0.5,
+  },
+  {
+    id: "cards_against_gt15",
+    category: "tarjetas",
+    direction: "against",
+    title: (h, t) => `El rival recibió más de 1.5 tarjetas amarillas en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCardsAgainst ?? 0) > 1.5,
+  },
+  {
+    id: "cards_against_gt25",
+    category: "tarjetas",
+    direction: "against",
+    title: (h, t) => `El rival recibió más de 2.5 tarjetas amarillas en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCardsAgainst ?? 0) > 2.5,
+  },
+  {
+    id: "cards_btts_match",
+    category: "tarjetas",
+    direction: "match",
+    title: (h, t) => `Ambos equipos recibieron tarjeta amarilla en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) >= 1 && (r.yellowCardsAgainst ?? 0) >= 1,
+    marketId: "cards_btts",
+  },
+  {
+    id: "cards_total_match_over15",
+    category: "tarjetas",
+    direction: "match",
+    title: (h, t) => `Hubo más de 1.5 tarjetas amarillas totales en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) + (r.yellowCardsAgainst ?? 0) > 1.5,
+    marketId: "cards_total_over_15",
+  },
+  {
+    id: "cards_total_match_over25",
+    category: "tarjetas",
+    direction: "match",
+    title: (h, t) => `Hubo más de 2.5 tarjetas amarillas totales en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) + (r.yellowCardsAgainst ?? 0) > 2.5,
+    marketId: "cards_total_over_25",
+  },
+  {
+    id: "cards_total_match_over35",
+    category: "tarjetas",
+    direction: "match",
+    title: (h, t) => `Hubo más de 3.5 tarjetas amarillas totales en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) + (r.yellowCardsAgainst ?? 0) > 3.5,
+    marketId: "cards_total_over_35",
+  },
+  {
+    id: "cards_total_match_over45",
+    category: "tarjetas",
+    direction: "match",
+    title: (h, t) => `Hubo más de 4.5 tarjetas amarillas totales en ${h} de ${t} partidos`,
+    predicate: (r) => (r.yellowCards ?? 0) + (r.yellowCardsAgainst ?? 0) > 4.5,
+    marketId: "cards_total_over_45",
+  },
+  {
+    id: "red_card_match_ge1",
+    category: "tarjetas",
+    direction: "match",
+    title: (h, t) => `Hubo al menos una tarjeta roja (propia o del rival) en ${h} de ${t} partidos`,
+    predicate: (r) => (r.redCards ?? 0) >= 1 || (r.redCardsAgainst ?? 0) >= 1,
+    marketId: "red_card_shown",
   },
   {
     id: "no_win_away",
@@ -289,34 +495,24 @@ const EXTREME_STAT_DEFINITIONS: ExtremeStatDefinition[] = [
     value: (r) => r.goalsFor + r.goalsAgainst,
     poolAcrossTeams: true,
   },
-  { key: "corners_for", label: "córners a favor", category: "corners", direction: "for", value: (r) => r.cornersFor },
-  { key: "corners_against", label: "córners en contra", category: "corners", direction: "against", value: (r) => r.cornersAgainst },
+  { key: "corners_for", label: "córners a favor", category: "corners", direction: "for", value: (r) => r.cornersFor ?? 0 },
+  { key: "corners_against", label: "córners en contra", category: "corners", direction: "against", value: (r) => r.cornersAgainst ?? 0 },
   {
     key: "match_corners",
     label: "córners totales del partido",
     category: "corners",
     direction: "match",
-    value: (r) => r.cornersFor + r.cornersAgainst,
+    value: (r) => (r.cornersFor ?? 0) + (r.cornersAgainst ?? 0),
     poolAcrossTeams: true,
   },
-  { key: "sot_for", label: "tiros al arco a favor", category: "tiros_arco", direction: "for", value: (r) => r.shotsOnTargetFor },
-  { key: "sot_against", label: "tiros al arco en contra", category: "tiros_arco", direction: "against", value: (r) => r.shotsOnTargetAgainst },
-  {
-    key: "match_sot",
-    label: "tiros al arco totales del partido",
-    category: "tiros_arco",
-    direction: "match",
-    value: (r) => r.shotsOnTargetFor + r.shotsOnTargetAgainst,
-    poolAcrossTeams: true,
-  },
-  { key: "shots_for", label: "remates a favor", category: "remates", direction: "for", value: (r) => r.shotsFor },
-  { key: "shots_against", label: "remates en contra", category: "remates", direction: "against", value: (r) => r.shotsAgainst },
+  { key: "shots_for", label: "remates a favor", category: "remates", direction: "for", value: (r) => r.shotsFor ?? 0 },
+  { key: "shots_against", label: "remates en contra", category: "remates", direction: "against", value: (r) => r.shotsAgainst ?? 0 },
   {
     key: "match_shots",
     label: "remates totales del partido",
     category: "remates",
     direction: "match",
-    value: (r) => r.shotsFor + r.shotsAgainst,
+    value: (r) => (r.shotsFor ?? 0) + (r.shotsAgainst ?? 0),
     poolAcrossTeams: true,
   },
   {
@@ -324,7 +520,23 @@ const EXTREME_STAT_DEFINITIONS: ExtremeStatDefinition[] = [
     label: "puntos de tarjetas (amarilla=1, roja=2)",
     category: "tarjetas",
     direction: "for",
-    value: (r) => cardPoints(r.yellowCards, r.redCards),
+    value: (r) => cardPoints(r.yellowCards ?? 0, r.redCards ?? 0),
+    poolAcrossTeams: true,
+  },
+  {
+    key: "yellow_cards_for",
+    label: "tarjetas amarillas",
+    category: "tarjetas",
+    direction: "for",
+    value: (r) => r.yellowCards ?? 0,
+    poolAcrossTeams: true,
+  },
+  {
+    key: "red_cards_for",
+    label: "tarjetas rojas",
+    category: "tarjetas",
+    direction: "for",
+    value: (r) => r.redCards ?? 0,
     poolAcrossTeams: true,
   },
 ];
@@ -414,25 +626,31 @@ function trendFromBooleans(hitFlags: boolean[]): TrendDirection {
 export function computeTeamPatterns(teamId: string, records: TeamMatchRecord[], limit?: number): Pattern[] {
   if (records.length < 4) return [];
 
-  const patterns: Pattern[] = PATTERN_TEMPLATES.filter((tpl) => tpl.id !== "no_win_away").map((tpl) => {
-    const flags = records.map((r) => tpl.predicate(r));
-    const hits = flags.filter(Boolean).length;
-    const total = records.length;
-    const percentage = Math.round((hits / total) * 100);
-    return {
-      id: `${teamId}-${tpl.id}`,
-      teamId,
-      category: tpl.category,
-      title: tpl.title(hits, total),
-      description: tpl.title(hits, total),
-      hits,
-      total,
-      percentage,
-      strength: strengthFromPercentage(percentage, total),
-      trend: trendFromBooleans(flags),
-      relatedMatchIds: records.filter((r) => tpl.predicate(r)).map((r) => r.matchId),
-    };
-  });
+  const patterns: Pattern[] = PATTERN_TEMPLATES.filter((tpl) => tpl.id !== "no_win_away")
+    .map((tpl) => {
+      const applicable = tpl.sampleFilter ? records.filter(tpl.sampleFilter) : records;
+      const minApplicable = tpl.minApplicable ?? 4;
+      if (applicable.length < minApplicable) return null;
+
+      const flags = records.map((r) => tpl.predicate(r));
+      const hits = flags.filter(Boolean).length;
+      const total = records.length;
+      const percentage = Math.round((hits / total) * 100);
+      return {
+        id: `${teamId}-${tpl.id}`,
+        teamId,
+        category: tpl.category,
+        title: tpl.title(hits, total),
+        description: tpl.title(hits, total),
+        hits,
+        total,
+        percentage,
+        strength: strengthFromPercentage(percentage, total),
+        trend: trendFromBooleans(flags),
+        relatedMatchIds: records.filter((r) => tpl.predicate(r)).map((r) => r.matchId),
+      };
+    })
+    .filter((p): p is Pattern => p !== null);
 
   const awayRecords = records.filter((r) => r.venue === "visitante");
   if (awayRecords.length >= 3) {
@@ -491,6 +709,32 @@ const CROSS_PAIRS: CrossPairDefinition[] = [
   { forTemplateId: "goals_for_ge1", againstTemplateId: "goals_against_ge1", marketId: "away_team_scores", side: "away" },
   { forTemplateId: "sot_for_ge4", againstTemplateId: "sot_against_ge4", marketId: "sot_home_over_35", side: "home" },
   { forTemplateId: "sot_for_ge4", againstTemplateId: "sot_against_ge4", marketId: "sot_away_over_25", side: "away" },
+
+  // Primera parte / segunda parte — solo aporta partidos con dato real de descanso (ver sampleFilter).
+  { forTemplateId: "first_half_match_over05", againstTemplateId: "first_half_match_over05", marketId: "first_half_over_05", side: "both" },
+  { forTemplateId: "first_half_match_over15", againstTemplateId: "first_half_match_over15", marketId: "first_half_over_15", side: "both" },
+  { forTemplateId: "first_half_match_under25", againstTemplateId: "first_half_match_under25", marketId: "first_half_under_25", side: "both" },
+  { forTemplateId: "first_half_match_under35", againstTemplateId: "first_half_match_under35", marketId: "first_half_under_35", side: "both" },
+  { forTemplateId: "first_half_btts_match", againstTemplateId: "first_half_btts_match", marketId: "first_half_btts", side: "both" },
+  { forTemplateId: "second_half_match_over05", againstTemplateId: "second_half_match_over05", marketId: "second_half_over_05", side: "both" },
+  { forTemplateId: "second_half_match_over15", againstTemplateId: "second_half_match_over15", marketId: "second_half_over_15", side: "both" },
+  { forTemplateId: "second_half_match_under25", againstTemplateId: "second_half_match_under25", marketId: "second_half_under_25", side: "both" },
+  { forTemplateId: "second_half_match_under35", againstTemplateId: "second_half_match_under35", marketId: "second_half_under_35", side: "both" },
+  { forTemplateId: "second_half_btts_match", againstTemplateId: "second_half_btts_match", marketId: "second_half_btts", side: "both" },
+
+  // Tarjetas — individuales requieren solo el dato propio; total/roja requieren el dato del rival (ver sampleFilter).
+  { forTemplateId: "cards_for_gt05", againstTemplateId: "cards_against_gt05", marketId: "cards_home_over_05", side: "home" },
+  { forTemplateId: "cards_for_gt15", againstTemplateId: "cards_against_gt15", marketId: "cards_home_over_15", side: "home" },
+  { forTemplateId: "cards_for_gt25", againstTemplateId: "cards_against_gt25", marketId: "cards_home_over_25", side: "home" },
+  { forTemplateId: "cards_for_gt05", againstTemplateId: "cards_against_gt05", marketId: "cards_away_over_05", side: "away" },
+  { forTemplateId: "cards_for_gt15", againstTemplateId: "cards_against_gt15", marketId: "cards_away_over_15", side: "away" },
+  { forTemplateId: "cards_for_gt25", againstTemplateId: "cards_against_gt25", marketId: "cards_away_over_25", side: "away" },
+  { forTemplateId: "cards_btts_match", againstTemplateId: "cards_btts_match", marketId: "cards_btts", side: "both" },
+  { forTemplateId: "cards_total_match_over15", againstTemplateId: "cards_total_match_over15", marketId: "cards_total_over_15", side: "both" },
+  { forTemplateId: "cards_total_match_over25", againstTemplateId: "cards_total_match_over25", marketId: "cards_total_over_25", side: "both" },
+  { forTemplateId: "cards_total_match_over35", againstTemplateId: "cards_total_match_over35", marketId: "cards_total_over_35", side: "both" },
+  { forTemplateId: "cards_total_match_over45", againstTemplateId: "cards_total_match_over45", marketId: "cards_total_over_45", side: "both" },
+  { forTemplateId: "red_card_match_ge1", againstTemplateId: "red_card_match_ge1", marketId: "red_card_shown", side: "both" },
 ];
 
 function classifyCrossStrength(pctFor: number, pctAgainst: number, totalFor: number, totalAgainst: number): CrossPatternStrength {
@@ -509,7 +753,8 @@ function classifyCrossStrength(pctFor: number, pctAgainst: number, totalFor: num
 
 function templateStatsFor(records: TeamMatchRecord[], templateId: string): { hits: number; total: number; pct: number } {
   const tpl = PATTERN_TEMPLATES.find((t) => t.id === templateId);
-  if (!tpl || records.length === 0) return { hits: 0, total: 0, pct: 0 };
+  if (!tpl) return { hits: 0, total: 0, pct: 0 };
+  if (records.length === 0) return { hits: 0, total: 0, pct: 0 };
   const hits = records.filter((r) => tpl.predicate(r)).length;
   return { hits, total: records.length, pct: Math.round((hits / records.length) * 100) };
 }
@@ -600,7 +845,12 @@ export function computeCrossPatterns(
     };
   });
 
-  return crossPairPatterns.sort((a, b) => b.combinedConfidence - a.combinedConfidence);
+  // Pares construidos sobre un campo opcional (descanso, tarjetas del rival) sin ningún
+  // partido con ese dato real en ninguno de los dos equipos no aportan nada mostrable
+  // ("cumple en 0 de sus últimos 0 partidos" no es un patrón, es la ausencia de muestra).
+  return crossPairPatterns
+    .filter((p) => p.teamAStat.total > 0 && p.teamBStat.total > 0)
+    .sort((a, b) => b.combinedConfidence - a.combinedConfidence);
 }
 
 /**

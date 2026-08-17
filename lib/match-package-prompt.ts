@@ -1,5 +1,55 @@
 import { MIN_HISTORY_PER_TEAM, RECOMMENDED_HISTORY_PER_TEAM, type MatchPackage } from "@/lib/validation/match-package";
 
+// El prompt copiable usa una muestra mas corta que el flujo automatico de
+// API-Football. El esquema acepta esta cantidad (minimo: 4).
+const STRICT_PROMPT_HISTORY_PER_TEAM = 5;
+
+/**
+ * Prompt visible en "Agregar partido". Se mantiene separado del ejemplo para
+ * impedir que una IA trate los valores ilustrativos como datos utilizables.
+ */
+export function getStrictMatchPackagePrompt(): string {
+  return `Eres un investigador deportivo. Tu unica tarea es entregar un paquete JSON con datos 100% REALES, COMPLETOS y COMPROBABLES del partido que te indique el usuario.
+
+REGLA ABSOLUTA
+No inventes, no estimes, no redondees, no rellenes huecos, no uses promedios como si fueran datos de un partido, no deduzcas estadisticas desde el marcador final y no reutilices datos de otro encuentro. Cada valor debe haber sido publicado por una fuente real y poder verificarse por separado.
+
+ANTES DE RESPONDER
+1. Investiga el partido, ambos equipos, la competicion y los ultimos ${STRICT_PROMPT_HISTORY_PER_TEAM} encuentros reales de CADA equipo.
+2. Abre y comprueba fuentes reales. Para cada partido historico verifica marcador, goles de primera y segunda parte, corners, remates, remates al arco, posesion y tarjetas de ambos equipos.
+3. Comprueba que las sumas son correctas: goles de primera parte + segunda parte = goles finales, para ambos equipos.
+4. No uses un dato si no puedes encontrar la fuente concreta que lo publica. Una pagina de resumen, una prediccion, una cuota, una IA o un marcador sin desglose no sirven como prueba para completar estadisticas.
+
+DATOS OBLIGATORIOS, TODOS REALES
+- Completa TODOS los campos de competiciones, equipos y match, incluidos estadio, fundacion, clasificacion, tabla, forma, medias, fecha, hora, jornada y estado real del partido.
+- Incluye exactamente dos equipos y exactamente ${STRICT_PROMPT_HISTORY_PER_TEAM} registros historicos completos por cada uno, ordenados del mas reciente al mas antiguo.
+- En CADA registro de histories completa sin excepcion: matchId, date, opponentId, competitionId, competitionType, venue, result, goalsFor, goalsAgainst, goalsForFirstHalf, goalsForSecondHalf, goalsAgainstFirstHalf, goalsAgainstSecondHalf, cornersFor, cornersAgainst, shotsFor, shotsAgainst, shotsOnTargetFor, shotsOnTargetAgainst, possession, yellowCards, redCards, yellowCardsAgainst, redCardsAgainst, resultStatus, statsStatus y note.
+- Cada note debe incluir la URL completa de la pagina concreta que respalda ese partido. sourceUrls debe incluir todas las URLs reales consultadas; no inventes ni reutilices URLs que no hayas abierto.
+- Incluye dataQuality e historyMeta completos. Usa resultStatus: "verified", statsStatus: "provided", dataQuality.resultData: "verified", dataQuality.providedAdvancedStats: "provided", dataQuality.newAdvancedStats: "provided". historyMeta.estimatedFieldsForNewMatches debe ser [].
+- El valor "estimated" esta prohibido en cualquier campo del JSON final. Tambien estan prohibidos null, "N/A", "desconocido", 0 de relleno, guiones, textos de marcador de posicion y valores supuestos.
+
+CUANDO FALTE CUALQUIER DATO
+Si no logras verificar el 100% de los campos obligatorios de los ${STRICT_PROMPT_HISTORY_PER_TEAM} partidos de ambos equipos, NO generes JSON, NO generes JSON parcial y NO completes nada por tu cuenta. Responde solamente una linea con este formato:
+NO PUEDO GENERAR EL JSON: falta verificar [campo(s)] de [partido(s)]. Comparte una fuente que contenga esos datos reales.
+
+PLANTILLA DE ESTRUCTURA
+El siguiente contenido sirve UNICAMENTE para conocer las claves, los tipos y el orden del JSON. No es una fuente, no son datos reales del partido solicitado y no se puede copiar ningun valor. Sustituye absolutamente todos sus IDs, fechas, equipos, competiciones, URLs, cantidades y textos por datos reales verificados.
+
+${MATCH_PACKAGE_EXAMPLE_JSON}
+
+CONTROL FINAL OBLIGATORIO
+Antes de responder, revisa uno por uno estos puntos: todos los valores son reales; cada valor tiene una fuente real consultada; hay ${STRICT_PROMPT_HISTORY_PER_TEAM} historiales completos por equipo; no hay estimaciones ni campos omitidos; los identificadores coinciden entre equipos, partido e historiales; las URLs son validas; y el JSON cumple exactamente la plantilla.
+
+SALIDA
+Solo si todos los controles anteriores se cumplen, crea un ARCHIVO descargable con extension .json y adjuntalo a tu respuesta. El nombre debe ser el valor exacto de "id" mas ".json"; por ejemplo: equipo-local-vs-equipo-visitante-2026-08-04.json.
+
+El contenido del archivo debe ser exclusivamente un unico objeto JSON valido, sin Markdown, sin explicaciones, sin comentarios y sin texto antes o despues. No pegues el JSON como texto en el chat: entrega el archivo .json para que el usuario lo descargue y lo suba al sistema.
+
+Si tu entorno no tiene capacidad real de crear y adjuntar archivos, NO pegues el JSON en texto. Responde solamente: NO PUEDO CREAR EL ARCHIVO .json: usa una IA con capacidad para adjuntar archivos.
+
+De lo contrario, si falta algun dato, usa exclusivamente el mensaje de bloqueo de datos indicado arriba.`;
+}
+
 // ============================================================================
 // Contenido de la pantalla "Agregar partido": el prompt copiable para pedirle
 // a otra IA (Claude, ChatGPT, etc.) que investigue un partido y devuelva el
@@ -97,6 +147,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 2,
         goalsAgainst: 0,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 0,
         cornersFor: 6,
         cornersAgainst: 3,
         shotsFor: 14,
@@ -121,6 +175,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "D",
         goalsFor: 1,
         goalsAgainst: 1,
+        goalsForFirstHalf: 0,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 5,
         cornersAgainst: 4,
         shotsFor: 10,
@@ -130,6 +188,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 52,
         yellowCards: 2,
         redCards: 0,
+        yellowCardsAgainst: 1,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -143,6 +203,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 3,
         goalsAgainst: 1,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 2,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 7,
         cornersAgainst: 2,
         shotsFor: 16,
@@ -152,6 +216,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 60,
         yellowCards: 1,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -165,6 +231,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "L",
         goalsFor: 0,
         goalsAgainst: 2,
+        goalsForFirstHalf: 0,
+        goalsForSecondHalf: 0,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 3,
         cornersAgainst: 6,
         shotsFor: 8,
@@ -174,6 +244,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 44,
         yellowCards: 3,
         redCards: 0,
+        yellowCardsAgainst: 1,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -187,6 +259,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 2,
         goalsAgainst: 1,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 6,
         cornersAgainst: 4,
         shotsFor: 13,
@@ -196,6 +272,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 54,
         yellowCards: 2,
         redCards: 0,
+        yellowCardsAgainst: 3,
+        redCardsAgainst: 1,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -209,6 +287,11 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "D",
         goalsFor: 1,
         goalsAgainst: 1,
+        // Ejemplo de registro donde SÍ se investigó a fondo pero la fuente
+        // consultada no publicaba el marcador al descanso ni las tarjetas
+        // del rival para este partido puntual: se omiten (nunca se estiman,
+        // porque son hechos concretos del partido, no una tendencia
+        // estadística) y punto único deja constancia en dataQuality.warning.
         cornersFor: 4,
         cornersAgainst: 5,
         shotsFor: 9,
@@ -231,6 +314,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 4,
         goalsAgainst: 2,
+        goalsForFirstHalf: 2,
+        goalsForSecondHalf: 2,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 8,
         cornersAgainst: 5,
         shotsFor: 18,
@@ -240,6 +327,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 58,
         yellowCards: 2,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -253,6 +342,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "L",
         goalsFor: 1,
         goalsAgainst: 3,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 0,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 2,
         cornersFor: 3,
         cornersAgainst: 7,
         shotsFor: 7,
@@ -262,6 +355,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 41,
         yellowCards: 3,
         redCards: 0,
+        yellowCardsAgainst: 1,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -275,6 +370,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 2,
         goalsAgainst: 0,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 0,
         cornersFor: 7,
         cornersAgainst: 3,
         shotsFor: 15,
@@ -284,6 +383,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 57,
         yellowCards: 1,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -297,6 +398,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "D",
         goalsFor: 1,
         goalsAgainst: 1,
+        goalsForFirstHalf: 0,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 0,
         cornersFor: 5,
         cornersAgainst: 5,
         shotsFor: 10,
@@ -306,6 +411,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 50,
         yellowCards: 2,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -321,6 +428,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "D",
         goalsFor: 1,
         goalsAgainst: 1,
+        goalsForFirstHalf: 0,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 0,
         cornersFor: 4,
         cornersAgainst: 5,
         shotsFor: 10,
@@ -330,6 +441,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 48,
         yellowCards: 2,
         redCards: 0,
+        yellowCardsAgainst: 3,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -343,6 +456,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 2,
         goalsAgainst: 0,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 0,
         cornersFor: 6,
         cornersAgainst: 2,
         shotsFor: 12,
@@ -352,6 +469,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 55,
         yellowCards: 1,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -365,6 +484,9 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "L",
         goalsFor: 0,
         goalsAgainst: 1,
+        // Otro ejemplo de omisión legítima: se investigó, pero la fuente no
+        // publicaba el desglose por tiempo ni las tarjetas del rival para
+        // este partido — se omiten en vez de inventarlos.
         cornersFor: 3,
         cornersAgainst: 5,
         shotsFor: 7,
@@ -387,6 +509,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "D",
         goalsFor: 2,
         goalsAgainst: 2,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 5,
         cornersAgainst: 5,
         shotsFor: 9,
@@ -396,6 +522,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 50,
         yellowCards: 3,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 1,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -409,6 +537,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 3,
         goalsAgainst: 1,
+        goalsForFirstHalf: 2,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 7,
         cornersAgainst: 3,
         shotsFor: 14,
@@ -418,6 +550,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 53,
         yellowCards: 1,
         redCards: 0,
+        yellowCardsAgainst: 1,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -431,6 +565,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "L",
         goalsFor: 0,
         goalsAgainst: 2,
+        goalsForFirstHalf: 0,
+        goalsForSecondHalf: 0,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 3,
         cornersAgainst: 6,
         shotsFor: 6,
@@ -440,6 +578,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 39,
         yellowCards: 2,
         redCards: 0,
+        yellowCardsAgainst: 1,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -453,6 +593,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "D",
         goalsFor: 1,
         goalsAgainst: 1,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 0,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 5,
         cornersAgainst: 4,
         shotsFor: 9,
@@ -462,6 +606,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 47,
         yellowCards: 3,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -475,6 +621,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "W",
         goalsFor: 2,
         goalsAgainst: 0,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 0,
         cornersFor: 6,
         cornersAgainst: 2,
         shotsFor: 11,
@@ -484,6 +634,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 56,
         yellowCards: 1,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -497,6 +649,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "D",
         goalsFor: 2,
         goalsAgainst: 2,
+        goalsForFirstHalf: 1,
+        goalsForSecondHalf: 1,
+        goalsAgainstFirstHalf: 1,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 4,
         cornersAgainst: 4,
         shotsFor: 8,
@@ -506,6 +662,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 50,
         yellowCards: 2,
         redCards: 0,
+        yellowCardsAgainst: 1,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "provided",
       },
@@ -519,6 +677,10 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         result: "L",
         goalsFor: 0,
         goalsAgainst: 1,
+        goalsForFirstHalf: 0,
+        goalsForSecondHalf: 0,
+        goalsAgainstFirstHalf: 0,
+        goalsAgainstSecondHalf: 1,
         cornersFor: 3,
         cornersAgainst: 5,
         shotsFor: 6,
@@ -528,6 +690,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
         possession: 43,
         yellowCards: 1,
         redCards: 0,
+        yellowCardsAgainst: 2,
+        redCardsAgainst: 0,
         resultStatus: "verified",
         statsStatus: "estimated",
       },
@@ -537,7 +701,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
     resultData: "verified",
     providedAdvancedStats: "provided",
     newAdvancedStats: "estimated",
-    warning: "Los córners y remates de los partidos marcados como 'estimated' no se publican en la fuente y se estimaron a partir del marcador.",
+    warning:
+      "Los córners y remates de los partidos marcados como 'estimated' no se publican en la fuente y se estimaron a partir del marcador. El desglose de goles por tiempo y las tarjetas del rival se buscaron activamente en cada partido; se omiten solo en los dos registros donde la fuente consultada no los publicaba (nunca se estimaron, por ser hechos puntuales del partido).",
   },
   historyMeta: {
     matchesPerTeam: 10,
@@ -591,9 +756,11 @@ REGLAS QUE DEBES SEGUIR SIN EXCEPCIÓN:
 14. "match.time" y todas las horas que uses deben estar en la ZONA HORARIA LOCAL DEL ESTADIO donde se juega ("match.stadium"), no en tu propia zona horaria ni en la del usuario. Si detectas una diferencia horaria relevante entre fuentes, acláralo en texto dentro de "dataQuality.warning", pero nunca escribas la hora convertida a otro huso en el campo "time".
 15. Antes de generar el JSON, si te falta información imprescindible (qué partido, en qué fecha, qué liga), PREGÚNTAME — no completes huecos con datos inventados.
 16. Verifica tú mismo, antes de responder, que el JSON sea sintácticamente válido y que pueda ser procesado por un validador estricto (sin comas colgantes, sin comentarios, todas las comillas dobles, sin campos con valores fuera de los permitidos, y sin estadísticas numéricas en 0 repetidas en todos los partidos como relleno).
-17. "yellowCards" y "redCards" son SIEMPRE las tarjetas del equipo investigado en ese registro, nunca las del rival — no existe un campo "para el rival" obligatorio. Si la fuente que consultaste también publica las tarjetas del RIVAL en ese mismo partido histórico, podés (opcionalmente) agregar "yellowCardsAgainst" y/o "redCardsAgainst" con ese dato real — nunca inventados ni estimados, solo si los confirmaste. Si no los tenés, simplemente omití esos dos campos (son opcionales, el JSON es válido sin ellos).
+17. "yellowCards" y "redCards" (las del equipo investigado en ese registro, nunca las del rival) son OBLIGATORIAS en TODOS los registros, sin excepción — ya lo eran y lo siguen siendo. Además, "yellowCardsAgainst" y "redCardsAgainst" (las tarjetas del RIVAL en ese mismo partido histórico) DEJARON DE SER un extra opcional que agregás "si te sobra tiempo": son parte del chequeo estándar que tenés que hacer en la fuente para CADA partido del historial, igual que buscás el marcador o los córners. Solo se omiten cuando, después de revisar de verdad la fuente de ese partido puntual, confirmás que no publica las tarjetas del rival — nunca se estiman ni se inventan (a diferencia de córners/remates de la regla 13, una tarjeta es un hecho puntual del partido, no una tendencia que se pueda promediar; "estimar" una tarjeta es inventarla).
+18. Lo mismo aplica al resultado al descanso: buscá activamente "goalsForFirstHalf"/"goalsForSecondHalf" (goles del equipo investigado en cada tiempo) y "goalsAgainstFirstHalf"/"goalsAgainstSecondHalf" (goles del rival al descanso) para CADA partido del historial — no es un dato decorativo que agregás si aparece a la primera, es parte de la investigación obligatoria de cada registro. Solo se omiten los cuatro juntos cuando confirmaste que la fuente de ese partido puntual no publica el resultado al descanso — nunca los inventes ni los estimes dividiendo el marcador final a la mitad "porque suena razonable". Si los incluís, "goalsForFirstHalf" + "goalsForSecondHalf" debe sumar exactamente "goalsFor" (mismo criterio para "goalsAgainst"), si no, el JSON se rechaza.
 
 CHEQUEO FINAL OBLIGATORIO ANTES DE RESPONDER (hazlo en silencio, no lo escribas en la respuesta):
 Repasa cada dato del JSON que estás por enviar y preguntate, uno por uno: "¿esto lo encontré de verdad en una fuente real, o lo estoy completando porque me falta el dato?". Si la respuesta es la segunda, ese campo tiene que estar marcado "estimated" (o preguntado antes de responder, nunca completado en silencio) — no hay una tercera opción de "lo dejo como si fuera real total nadie se va a dar cuenta". Este chequeo aplica también a "sourceUrls": no la incluyas si no la usaste de verdad.
+Repasa además, partido por partido, si de verdad revisaste la fuente en busca del resultado al descanso y de las tarjetas del rival (regla 17 y 18) antes de omitirlas — omitir esos campos porque "no los busqué" no es una omisión legítima; solo lo es cuando SÍ los buscaste y confirmaste que la fuente no los publica para ese partido puntual.
 
 Cuando tengas toda la información, responde solo con el JSON.`;

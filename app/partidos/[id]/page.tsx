@@ -4,7 +4,8 @@ import { MapPin, CalendarDays, Trophy, Wand2 } from "lucide-react";
 import { getMatchById } from "@/data/matches";
 import { getTeamById } from "@/data/teams";
 import { getCompetitionById } from "@/data/competitions";
-import { getImportedPackage, importedHistories } from "@/data/imported-data";
+import { getImportedPackage } from "@/data/imported-data";
+import { getTeamMatchPool } from "@/data/team-history";
 import { estimateFeaturedStats } from "@/services/match-service";
 import { TeamBadge } from "@/components/shared/team-badge";
 import { FormIndicator } from "@/components/shared/form-indicator";
@@ -14,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MATCH_STATUS_LABEL, COMPETITION_TYPE_LABEL } from "@/lib/labels";
 import { formatDateLong } from "@/utils/formatters";
-import { TeamHistoryTable } from "@/components/analysis/team-history-table";
+import { TeamMatchList } from "@/components/analysis/team-match-list";
 
 export default async function MatchDetailPage(props: PageProps<"/partidos/[id]">) {
   const { id } = await props.params;
@@ -27,8 +28,8 @@ export default async function MatchDetailPage(props: PageProps<"/partidos/[id]">
   if (!home || !away) notFound();
 
   const importedPackage = getImportedPackage(match.id);
-  const homeHistory = importedHistories[home.id] ?? [];
-  const awayHistory = importedHistories[away.id] ?? [];
+  const homeHistory = getTeamMatchPool(home.id);
+  const awayHistory = getTeamMatchPool(away.id);
   const analysisHref = `/analisis/${home.id}-vs-${away.id}-10c`;
   const stats = match.statistics;
   const quick = match.status !== "finished" ? estimateFeaturedStats(home.id, away.id) : null;
@@ -130,11 +131,11 @@ export default async function MatchDetailPage(props: PageProps<"/partidos/[id]">
             <div className="space-y-4">
               <div>
                 <p className="mb-2 text-sm font-medium">Últimos partidos de {home.shortName}</p>
-                <TeamHistoryTable records={homeHistory} />
+                <TeamMatchList team={home} records={homeHistory} />
               </div>
               <div>
                 <p className="mb-2 text-sm font-medium">Últimos partidos de {away.shortName}</p>
-                <TeamHistoryTable records={awayHistory} />
+                <TeamMatchList team={away} records={awayHistory} />
               </div>
             </div>
 

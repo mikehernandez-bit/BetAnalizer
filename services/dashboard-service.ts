@@ -14,9 +14,16 @@ export function getDashboardSummary(): DashboardSummary {
   let valueBets = 0;
 
   featured.forEach((match) => {
-    const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
-    strongPatterns += analysis.crossPatterns.filter((c) => c.strength === "fuerte" || c.strength === "muy_fuerte").length;
-    valueBets += analysis.markets.filter((m) => m.valueLevel === "valor_alto" || m.valueLevel === "valor_moderado").length;
+    const home = getTeamById(match.homeTeamId);
+    const away = getTeamById(match.awayTeamId);
+    if (!home || !away) return;
+    try {
+      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
+      strongPatterns += analysis.crossPatterns.filter((c) => c.strength === "fuerte" || c.strength === "muy_fuerte").length;
+      valueBets += analysis.markets.filter((m) => m.valueLevel === "valor_alto" || m.valueLevel === "valor_moderado").length;
+    } catch {
+      // Ignore matches with missing or unconfirmed data without breaking the dashboard summary
+    }
   });
 
   const decided = savedAnalyses.filter((a) => a.status === "ganada" || a.status === "perdida");
@@ -49,16 +56,20 @@ export function getTopHighlightMarkets(limit = 4): HighlightMarket[] {
     const home = getTeamById(match.homeTeamId);
     const away = getTeamById(match.awayTeamId);
     if (!home || !away) return;
-    const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
-    const best = pickHeadlineMarket(analysis.markets);
-    if (!best) return;
-    highlights.push({
-      matchLabel: `${home.shortName} vs ${away.shortName}`,
-      matchId: match.id,
-      analysisId: analysis.id,
-      evaluation: best,
-      matchingPatterns: analysis.crossPatterns.filter((c) => c.marketId === best.market.id).length || analysis.homePatterns.length,
-    });
+    try {
+      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
+      const best = pickHeadlineMarket(analysis.markets);
+      if (!best) return;
+      highlights.push({
+        matchLabel: `${home.shortName} vs ${away.shortName}`,
+        matchId: match.id,
+        analysisId: analysis.id,
+        evaluation: best,
+        matchingPatterns: analysis.crossPatterns.filter((c) => c.marketId === best.market.id).length || analysis.homePatterns.length,
+      });
+    } catch {
+      // Ignore matches with missing team data safely
+    }
   });
 
   return highlights.sort((a, b) => b.evaluation.confidence - a.evaluation.confidence).slice(0, limit);
@@ -129,13 +140,20 @@ export function getPatternsByCategoryChart() {
   const counts = new Map<string, number>();
 
   featured.forEach((match) => {
-    const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
-    [...analysis.homePatterns, ...analysis.awayPatterns].forEach((p) => {
-      counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
-    });
-    analysis.crossPatterns.forEach((p) => {
-      counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
-    });
+    const home = getTeamById(match.homeTeamId);
+    const away = getTeamById(match.awayTeamId);
+    if (!home || !away) return;
+    try {
+      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
+      [...analysis.homePatterns, ...analysis.awayPatterns].forEach((p) => {
+        counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+      });
+      analysis.crossPatterns.forEach((p) => {
+        counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+      });
+    } catch {
+      // Ignore matches with missing team data safely
+    }
   });
 
   return Array.from(counts.entries())

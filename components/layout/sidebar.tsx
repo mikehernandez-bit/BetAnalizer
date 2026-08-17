@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronsLeft, ChevronsRight, LogOut, Wifi } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, LogOut, PanelLeftOpen, Wifi, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { LogoIcon } from "@/components/brand/logo-icon";
 import { NAV_ITEMS, APP_VERSION } from "@/lib/navigation";
@@ -28,10 +28,37 @@ export function Sidebar() {
         sidebarCollapsed ? "w-[76px]" : "w-64"
       )}
     >
-      <div className={cn("flex h-16 items-center border-b border-sidebar-border px-4", sidebarCollapsed && "justify-center px-0")}>
+      <div className={cn("flex h-16 items-center justify-between border-b border-sidebar-border px-4", sidebarCollapsed && "justify-center px-0")}>
         <Link href="/" aria-label="BetAnalyzer — inicio">
           {sidebarCollapsed ? <LogoIcon size={28} /> : <Logo size="sm" />}
         </Link>
+        {sidebarCollapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="hidden size-8 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                aria-label="Desplegar barra lateral"
+              >
+                <PanelLeftOpen className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Desplegar barra lateral</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+            aria-label="Cerrar barra lateral"
+            title="Cerrar barra lateral"
+          >
+            <X className="size-4.5" />
+          </Button>
+        )}
       </div>
 
       <nav className="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-3 py-4">
@@ -99,11 +126,18 @@ export function Sidebar() {
 
         <button
           onClick={toggleSidebar}
+          aria-label={sidebarCollapsed ? "Desplegar barra lateral" : "Ocultar barra lateral"}
           className={cn(
             "mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-sidebar-border py-1.5 text-xs text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           )}
         >
-          {sidebarCollapsed ? <ChevronsRight className="size-3.5" /> : <><ChevronsLeft className="size-3.5" /> Contraer</>}
+          {sidebarCollapsed ? (
+            <PanelLeftOpen className="size-4 text-brand-green-bright" />
+          ) : (
+            <>
+              <X className="size-3.5" /> Ocultar barra
+            </>
+          )}
         </button>
 
         {!sidebarCollapsed && <p className="mt-2 text-center text-[11px] text-muted-foreground">v{APP_VERSION}</p>}

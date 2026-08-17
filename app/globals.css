@@ -172,6 +172,57 @@
 }
 
 @layer utilities {
+  /* Respond to the usable app panel width, not only the browser viewport. */
+  .app-main {
+    container-type: inline-size;
+  }
+
+  .ticket-action-short-label {
+    display: none;
+  }
+
+  @container (max-width: 42rem) {
+    .ticket-preset-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .ticket-summary-grid,
+    .adaptive-stat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .ticket-actions {
+      width: 100% !important;
+    }
+
+    .ticket-action-label {
+      display: none;
+    }
+
+    .ticket-action-short-label {
+      display: inline;
+    }
+  }
+
+  @container (max-width: 27rem) {
+    .ticket-summary-grid,
+    .adaptive-stat-grid {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+  }
+
+  @container (min-width: 32rem) {
+    .ticket-market-evidence .market-parameter-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container (min-width: 56rem) {
+    .ticket-market-evidence .market-parameter-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
   .bg-app-gradient {
     background:
       radial-gradient(80rem 40rem at 10% -10%, color-mix(in oklch, var(--brand-green) 7%, transparent) 0%, transparent 60%),

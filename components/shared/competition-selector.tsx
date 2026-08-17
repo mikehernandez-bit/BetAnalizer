@@ -6,9 +6,11 @@ interface CompetitionSelectorProps {
   onChange: (value: string) => void;
   includeAllOption?: boolean;
   disabled?: boolean;
+  options?: { id: string; name: string }[];
 }
 
-export function CompetitionSelector({ value, onChange, includeAllOption, disabled }: CompetitionSelectorProps) {
+export function CompetitionSelector({ value, onChange, includeAllOption, disabled, options }: CompetitionSelectorProps) {
+  const list = options ?? competitions;
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className="w-full">
@@ -16,7 +18,7 @@ export function CompetitionSelector({ value, onChange, includeAllOption, disable
       </SelectTrigger>
       <SelectContent>
         {includeAllOption && <SelectItem value="all">Todas las competiciones</SelectItem>}
-        {competitions.map((c) => (
+        {list.map((c) => (
           <SelectItem key={c.id} value={c.id}>
             {c.name}
           </SelectItem>

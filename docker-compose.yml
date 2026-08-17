@@ -1,0 +1,11 @@
+services:
+  betanalyzer:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Monta la carpeta data/ real del proyecto dentro del contenedor, así
+      # lo que se importe desde "Agregar partido" queda guardado en tu disco
+      # y sobrevive a un `docker compose down` / rebuild de la imagen.
+      - ./data:/app/data
+    restart: unless-stopped

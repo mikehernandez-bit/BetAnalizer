@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PATTERN_STRENGTH_LABEL } from "@/lib/labels";
 import { formatDateShort } from "@/utils/formatters";
-import { cn } from "@/lib/utils";
+import { getVenueConditionTag, cn } from "@/lib/utils";
+import { DownloadCardButton } from "@/components/shared/download-card-button";
 
 const STRENGTH_STYLE: Record<Pattern["strength"], string> = {
   muy_fuerte: "border-brand-green/30 bg-brand-green/10 text-brand-green-bright",
@@ -27,21 +28,47 @@ const TREND_ICON: Record<TrendDirection, typeof TrendingUp> = {
 interface PatternCardProps {
   pattern: Pattern;
   records?: TeamMatchRecord[];
+  matchLabel?: string;
 }
 
-export function PatternCard({ pattern, records }: PatternCardProps) {
+export function PatternCard({ pattern, records, matchLabel }: PatternCardProps) {
   const [open, setOpen] = React.useState(false);
   const TrendIcon = TREND_ICON[pattern.trend];
   const related = records?.filter((r) => pattern.relatedMatchIds.includes(r.matchId)).slice(0, 6) ?? [];
+  const venueTag = getVenueConditionTag(pattern.title);
 
   return (
-    <Card>
+    <Card className="card-download-target">
       <CardContent className="space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium leading-snug text-foreground">{pattern.title}</p>
-          <Badge variant="outline" className={cn("shrink-0 text-[10px]", STRENGTH_STYLE[pattern.strength])}>
-            {PATTERN_STRENGTH_LABEL[pattern.strength]}
-          </Badge>
+          <div className="space-y-1">
+            {matchLabel && (
+              <div className="inline-flex items-center gap-1 rounded-md border border-brand-green/30 bg-brand-green/10 px-2 py-0.5 text-[11px] font-bold text-brand-green-bright shadow-sm">
+                <span>⚔️</span>
+                <span>{matchLabel}</span>
+              </div>
+            )}
+            <p className="text-sm font-medium leading-snug text-foreground">{pattern.title}</p>
+            {venueTag && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[10px] font-semibold px-2 py-0.5 border",
+                  venueTag.isHome
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                    : "border-sky-500/40 bg-sky-500/10 text-sky-400"
+                )}
+              >
+                {venueTag.isHome ? "🏠" : "✈️"} {venueTag.label}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Badge variant="outline" className={cn("shrink-0 text-[10px]", STRENGTH_STYLE[pattern.strength])}>
+              {PATTERN_STRENGTH_LABEL[pattern.strength]}
+            </Badge>
+            <DownloadCardButton filename={`patron_${pattern.id}`} />
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

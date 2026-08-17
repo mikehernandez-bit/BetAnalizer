@@ -1,5 +1,5 @@
 import { CommonOpponentsAnalysis } from "@/types";
-import { importedHistories } from "@/data/imported-data";
+import { allTeamHistories } from "@/data/team-history";
 import { getTeamById } from "@/data/teams";
 import { deriveCommonOpponents } from "@/utils/matchups";
 
@@ -36,6 +36,6 @@ export function getCommonOpponents(teamAId: string, teamBId: string): CommonOppo
 
   const teamALabel = getTeamById(teamAId)?.shortName ?? "El primer equipo";
   const teamBLabel = getTeamById(teamBId)?.shortName ?? "El segundo equipo";
-  const derived = deriveCommonOpponents(teamAId, teamBId, importedHistories, teamALabel, teamBLabel);
+  const derived = deriveCommonOpponents(teamAId, teamBId, allTeamHistories, teamALabel, teamBLabel);
   return derived.opponents.length > 0 ? derived : emptyCommonOpponents();
 }

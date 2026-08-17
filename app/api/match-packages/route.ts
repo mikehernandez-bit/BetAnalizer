@@ -4,9 +4,26 @@ import { findCrossPackageConflicts, hasPendingChanges, mergeImportedFile, remove
 import { readImportedFile, writeImportedFile } from "@/lib/match-package-store";
 
 // Lee/escribe directamente el archivo en disco en cada request: no depende
-// de caché de módulo ni de fetch cache.
+// de caché de módulo ni de fetch cache — ESTA ruta siempre ve el dato más
+// reciente. El problema es el RESTO del sitio: data/teams.ts, data/matches.ts,
+// etc. hacen `import rawPackages from "@/data/imported-analysis-packages.json"`
+// y calculan sus arrays UNA SOLA VEZ cuando el proceso de Node arranca — en
+// `next dev` no se nota porque el watcher de Next recompila esos módulos
+// solos; en producción (`next start` / standalone, que es lo que corre
+// Docker) nadie los vuelve a evaluar, así que un partido importado queda
+// invisible en el dashboard/"Encuentros analizados"/etc. hasta que el
+// proceso se reinicia. Por eso, después de escribir un cambio real en
+// producción, se reinicia el proceso a propósito — con `restart:
+// unless-stopped` en docker-compose.yml, vuelve a levantar solo en segundos,
+// ya con los datos frescos.
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+function scheduleProcessRestartIfNeeded() {
+  if (process.env.NODE_ENV === "production") {
+    setTimeout(() => process.exit(0), 500);
+  }
+}
 
 /** GET: estado actual completo (usado para la comparación y para "Exportar JSON"). */
 export async function GET() {
@@ -78,7 +95,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return Response.json({ success: true, confirmed: true, summary, ...file });
+  const response = Response.json({ success: true, confirmed: true, summary, ...file });
+  if (pending) scheduleProcessRestartIfNeeded();
+  return response;
 }
 
 /** DELETE: elimina un paquete completo por id — única forma de borrar datos, siempre explícita. */
@@ -102,5 +121,7 @@ export async function DELETE(request: NextRequest) {
 
   const next = removePackage(current, packageId);
   await writeImportedFile(next);
-  return Response.json({ success: true, ...next });
+  const response = Response.json({ success: true, ...next });
+  scheduleProcessRestartIfNeeded();
+  return response;
 }

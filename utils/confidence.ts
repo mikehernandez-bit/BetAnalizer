@@ -1,5 +1,7 @@
 import { CONFIDENCE_WEIGHTS, ConfidenceBreakdown, ConfidenceLevel } from "@/types";
 
+type ConfidenceSignal = keyof typeof CONFIDENCE_WEIGHTS;
+
 export interface ConfidenceInputs {
   recentPerformance: number;
   rivalVulnerability: number;
@@ -8,6 +10,8 @@ export interface ConfidenceInputs {
   commonOpponents: number;
   lastThreeTrend: number;
   dataQuality: number;
+  /** Señales que no aplican al mercado (por ejemplo H2H en 1T) no se ponderan. */
+  availableSignals?: Partial<Record<ConfidenceSignal, boolean>>;
 }
 
 export function classifyConfidence(score: number): ConfidenceLevel {
@@ -53,14 +57,21 @@ export function computeConfidenceBreakdown(inputs: ConfidenceInputs): Confidence
   const lastThreeTrend = clamp(inputs.lastThreeTrend);
   const dataQuality = clamp(inputs.dataQuality);
 
+  const values: Record<ConfidenceSignal, number> = {
+    recentPerformance,
+    rivalVulnerability,
+    homeAwayCondition,
+    headToHead,
+    commonOpponents,
+    lastThreeTrend,
+    dataQuality,
+  };
+  const activeSignals = (Object.keys(CONFIDENCE_WEIGHTS) as ConfidenceSignal[]).filter(
+    (signal) => inputs.availableSignals?.[signal] !== false
+  );
+  const activeWeight = activeSignals.reduce((sum, signal) => sum + CONFIDENCE_WEIGHTS[signal], 0);
   const finalScore = Math.round(
-    recentPerformance * CONFIDENCE_WEIGHTS.recentPerformance +
-      rivalVulnerability * CONFIDENCE_WEIGHTS.rivalVulnerability +
-      homeAwayCondition * CONFIDENCE_WEIGHTS.homeAwayCondition +
-      headToHead * CONFIDENCE_WEIGHTS.headToHead +
-      commonOpponents * CONFIDENCE_WEIGHTS.commonOpponents +
-      lastThreeTrend * CONFIDENCE_WEIGHTS.lastThreeTrend +
-      dataQuality * CONFIDENCE_WEIGHTS.dataQuality
+    activeSignals.reduce((sum, signal) => sum + values[signal] * CONFIDENCE_WEIGHTS[signal], 0) / activeWeight
   );
 
   return {

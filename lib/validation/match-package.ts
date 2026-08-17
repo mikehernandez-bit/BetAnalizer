@@ -16,7 +16,7 @@ export const MIN_HISTORY_PER_TEAM = 4;
  *  a la IA en el prompt como estándar, para que el historial tenga suficiente profundidad. */
 export const RECOMMENDED_HISTORY_PER_TEAM = 10;
 
-const DATA_STATUS_VALUES = ["verified", "provided", "estimated"] as const;
+const DATA_STATUS_VALUES = ["verified", "provided", "estimated", "unavailable"] as const;
 export type DataStatus = (typeof DATA_STATUS_VALUES)[number];
 const dataStatusSchema = z.enum(DATA_STATUS_VALUES);
 
@@ -108,13 +108,17 @@ export const historyRecordSchema = z
     result: resultLetterSchema,
     goalsFor: z.number().int().nonnegative(),
     goalsAgainst: z.number().int().nonnegative(),
+    goalsForFirstHalf: z.number().int().nonnegative().optional(),
+    goalsForSecondHalf: z.number().int().nonnegative().optional(),
+    goalsAgainstFirstHalf: z.number().int().nonnegative().optional(),
+    goalsAgainstSecondHalf: z.number().int().nonnegative().optional(),
     cornersFor: z.number().int().nonnegative(),
     cornersAgainst: z.number().int().nonnegative(),
-    shotsFor: z.number().int().nonnegative(),
-    shotsAgainst: z.number().int().nonnegative(),
-    shotsOnTargetFor: z.number().int().nonnegative(),
-    shotsOnTargetAgainst: z.number().int().nonnegative(),
-    possession: z.number().min(0).max(100),
+    shotsFor: z.number().int().nonnegative().optional(),
+    shotsAgainst: z.number().int().nonnegative().optional(),
+    shotsOnTargetFor: z.number().int().nonnegative().optional(),
+    shotsOnTargetAgainst: z.number().int().nonnegative().optional(),
+    possession: z.number().min(0).max(100).optional(),
     yellowCards: z.number().int().nonnegative(),
     redCards: z.number().int().nonnegative(),
     yellowCardsAgainst: z.number().int().nonnegative().optional(),
@@ -123,7 +127,31 @@ export const historyRecordSchema = z
     statsStatus: dataStatusSchema.optional(),
     note: z.string().min(1).optional(),
   })
-  .describe("historyRecord");
+  .describe("historyRecord")
+  .superRefine((record, ctx) => {
+    if (
+      record.goalsForFirstHalf !== undefined &&
+      record.goalsForSecondHalf !== undefined &&
+      record.goalsForFirstHalf + record.goalsForSecondHalf !== record.goalsFor
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["goalsForSecondHalf"],
+        message: `goalsForFirstHalf (${record.goalsForFirstHalf}) + goalsForSecondHalf (${record.goalsForSecondHalf}) debe ser igual a goalsFor (${record.goalsFor}).`,
+      });
+    }
+    if (
+      record.goalsAgainstFirstHalf !== undefined &&
+      record.goalsAgainstSecondHalf !== undefined &&
+      record.goalsAgainstFirstHalf + record.goalsAgainstSecondHalf !== record.goalsAgainst
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["goalsAgainstSecondHalf"],
+        message: `goalsAgainstFirstHalf (${record.goalsAgainstFirstHalf}) + goalsAgainstSecondHalf (${record.goalsAgainstSecondHalf}) debe ser igual a goalsAgainst (${record.goalsAgainst}).`,
+      });
+    }
+  });
 
 const dataQualitySchema = z
   .strictObject({
@@ -156,7 +184,7 @@ export const packageSchema = z
       z.string(),
       z
         .array(historyRecordSchema)
-        .min(MIN_HISTORY_PER_TEAM, `Se requieren al menos ${MIN_HISTORY_PER_TEAM} partidos históricos por equipo`)
+        .min(0)
     ),
     dataQuality: dataQualitySchema.optional(),
     historyMeta: historyMetaSchema.optional(),
@@ -217,6 +245,13 @@ export const packageSchema = z
         });
       }
       const records = pkg.histories[teamId] ?? [];
+      if (pkg.dataQuality?.newAdvancedStats !== "unavailable" && records.length < MIN_HISTORY_PER_TEAM) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["histories", teamId],
+          message: `Se requieren al menos ${MIN_HISTORY_PER_TEAM} partidos historicos por equipo.`,
+        });
+      }
       const matchIds = new Set<string>();
       records.forEach((record, i) => {
         if (matchIds.has(record.matchId)) {
@@ -229,6 +264,14 @@ export const packageSchema = z
         matchIds.add(record.matchId);
       });
     });
+
+    if (pkg.dataQuality?.newAdvancedStats === "unavailable" && !pkg.dataQuality.warning) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["dataQuality", "warning"],
+        message: 'Cuando los datos no estan disponibles, explica la limitacion en "warning".',
+      });
+    }
   });
 
 export const importedFileSchema = z.object({
@@ -242,6 +285,43 @@ export type Match = z.infer<typeof matchSchema>;
 export type HistoryRecord = z.infer<typeof historyRecordSchema>;
 export type MatchPackage = z.infer<typeof packageSchema>;
 export type ImportedFile = z.infer<typeof importedFileSchema>;
+
+/**
+ * Compatibilidad exclusiva para paquetes estáticos antiguos. Antes de que la
+ * validación exigiera ids exactos, algunos archivos guardaron un alias de
+ * historial junto con el id correcto. Conservamos únicamente las claves que
+ * pertenecen a los dos equipos del paquete. Las importaciones nuevas no usan
+ * esta función: siguen validándose de forma estricta en `validateImportBatch`.
+ */
+export function removeLegacyHistoryAliases(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const file = raw as Record<string, unknown>;
+  if (!Array.isArray(file.packages)) return raw;
+
+  return {
+    ...file,
+    packages: file.packages.map((candidate) => {
+      if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return candidate;
+      const pkg = candidate as Record<string, unknown>;
+      if (!Array.isArray(pkg.teams) || !pkg.histories || typeof pkg.histories !== "object" || Array.isArray(pkg.histories)) {
+        return candidate;
+      }
+
+      const teamIds = new Set(
+        pkg.teams.flatMap((team) => {
+          if (!team || typeof team !== "object" || Array.isArray(team)) return [];
+          const id = (team as Record<string, unknown>).id;
+          return typeof id === "string" ? [id] : [];
+        })
+      );
+      const histories = pkg.histories as Record<string, unknown>;
+      return {
+        ...pkg,
+        histories: Object.fromEntries(Object.entries(histories).filter(([teamId]) => teamIds.has(teamId))),
+      };
+    }),
+  };
+}
 
 // ----------------------------------------------------------------------------
 // Validación de un lote (una o varias entregas de paquetes en un solo JSON)
