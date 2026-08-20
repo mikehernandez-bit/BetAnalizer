@@ -10,6 +10,8 @@ import { estimateFeaturedStats } from "@/services/match-service";
 import { TeamBadge } from "@/components/shared/team-badge";
 import { FormIndicator } from "@/components/shared/form-indicator";
 import { FavoriteButton } from "@/components/shared/favorite-button";
+import { CopyMatchButton } from "@/components/shared/copy-match-button";
+import { formatFootballMatchToClipboard } from "@/lib/clipboard-formatters";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,12 @@ export default async function MatchDetailPage(props: PageProps<"/partidos/[id]">
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline">{MATCH_STATUS_LABEL[match.status]}</Badge>
+              <CopyMatchButton
+                getText={() => formatFootballMatchToClipboard(match)}
+                label="Copiar info"
+                size="sm"
+                title="Copiar información completa del encuentro y sus mercados"
+              />
               <FavoriteButton type="match" refId={match.id} label={`${home.shortName} vs ${away.shortName}`} meta={competition?.name} />
             </div>
           </div>

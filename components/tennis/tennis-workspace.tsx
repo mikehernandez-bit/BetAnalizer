@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { CopyMatchButton } from "@/components/shared/copy-match-button";
+import { formatTennisAnalysisToClipboard, formatTennisStoredEventToClipboard } from "@/lib/clipboard-formatters";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "betanalyzer.tennis-analyses.v1";
@@ -241,12 +243,21 @@ function AnalysisResult({ analysis }: { analysis: TennisAnalysis }) {
       </div>
 
       <div>
-        <div className="mb-3 flex items-end justify-between gap-3">
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold">Mercados de tenis</h3>
             <p className="text-sm text-muted-foreground">Ordenados por recomendación y probabilidad estimada.</p>
           </div>
-          <Badge variant="outline">{analysis.markets.filter((item) => item.recommendation === "fuerte").length} fuertes</Badge>
+          <div className="flex items-center gap-2">
+            <CopyMatchButton
+              getText={() => formatTennisAnalysisToClipboard(analysis)}
+              label="Copiar análisis completo"
+              successLabel="¡Análisis copiado!"
+              variant="default"
+              size="sm"
+            />
+            <Badge variant="outline">{analysis.markets.filter((item) => item.recommendation === "fuerte").length} fuertes</Badge>
+          </div>
         </div>
         <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {orderedMarkets.map((item) => (
@@ -379,6 +390,13 @@ function StoredEventCard({ event, outcome, returnDay, onLoad, onSaveOutcome }: {
             <CardDescription>{event.input.tournament} · {event.input.date}{event.input.time ? ` · ${event.input.time}` : ""}</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
+            <CopyMatchButton
+              getText={() => formatTennisStoredEventToClipboard(event, outcome, preview)}
+              label="Copiar info"
+              size="default"
+              variant="outline"
+              title="Copiar información completa y mercados de este partido de tenis"
+            />
             <Button asChild><Link href={`/tenis/${event.id}?day=${returnDay}`}>Abrir análisis completo <ArrowRight /></Link></Button>
             <Button variant="outline" onClick={() => onLoad(event)}><BarChart3 /> Cargar en editor</Button>
             <RecordTennisResultDialog id={event.id} player1={event.input.player1.name} player2={event.input.player2.name} current={outcome} predictedWinner={preview.projectedWinner} bestOf={event.input.bestOf} onSave={onSaveOutcome} />

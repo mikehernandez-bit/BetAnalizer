@@ -31,6 +31,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyMatchButton } from "@/components/shared/copy-match-button";
+import { formatTennisStoredEventToClipboard } from "@/lib/clipboard-formatters";
 import { cn } from "@/lib/utils";
 import type { TennisDayFilter } from "@/lib/tennis-event-groups";
 
@@ -83,7 +85,21 @@ function DetailHeader({ event, analysis, returnDay }: { event: TennisStoredEvent
   const hit = event.actualResult?.winner === analysis.projectedWinner;
   return (
     <div className="space-y-4">
-      <Button asChild variant="ghost"><Link href={`/tenis?day=${returnDay}`}><ArrowLeft /> Volver a encuentros de tenis</Link></Button>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button asChild variant="ghost"><Link href={`/tenis?day=${returnDay}`}><ArrowLeft /> Volver a encuentros de tenis</Link></Button>
+        <CopyMatchButton
+          getText={() =>
+            formatTennisStoredEventToClipboard(
+              event,
+              event.actualResult ? { id: event.id, winner: event.actualResult.winner, score: actualScore(event), recordedAt: "" } : undefined,
+              analysis
+            )
+          }
+          label="Copiar análisis completo"
+          successLabel="¡Análisis copiado!"
+          variant="default"
+        />
+      </div>
       <Card className="overflow-hidden">
         <CardContent className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
@@ -141,6 +157,22 @@ function DetailHeader({ event, analysis, returnDay }: { event: TennisStoredEvent
               <p className="mt-2 text-center text-xs text-muted-foreground">La foto prepartido se calculó sin utilizar el resultado final.</p>
             </CardContent>
           </Card>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <CopyMatchButton
+              getText={() =>
+                formatTennisStoredEventToClipboard(
+                  event,
+                  event.actualResult ? { id: event.id, winner: event.actualResult.winner, score: actualScore(event), recordedAt: "" } : undefined,
+                  analysis
+                )
+              }
+              label="Copiar toda la información y mercados"
+              successLabel="¡Información copiada!"
+              variant="outline"
+            />
+            <p className="text-xs text-muted-foreground">Incluye los 17 mercados evaluados, perfil de jugadores y auditoría.</p>
+          </div>
         </CardContent>
       </Card>
     </div>

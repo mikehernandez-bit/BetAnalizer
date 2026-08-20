@@ -11,6 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { relativeDayLabel } from "@/utils/formatters";
 import { checkMatchDataAudit } from "@/utils/data-audit";
 import { DownloadCardButton } from "@/components/shared/download-card-button";
+import { CopyMatchButton } from "@/components/shared/copy-match-button";
+import { formatFootballAnalysisToClipboard, formatFootballMatchToClipboard } from "@/lib/clipboard-formatters";
 
 export function AnalyzedMatchCard({ match }: { match: Match }) {
   const home = getTeamById(match.homeTeamId);
@@ -43,6 +45,12 @@ export function AnalyzedMatchCard({ match }: { match: Match }) {
               ) : (
                 <Badge variant="outline" className="shrink-0">Cargado</Badge>
               )}
+              <CopyMatchButton
+                getText={() => analysis ? formatFootballAnalysisToClipboard(analysis) : formatFootballMatchToClipboard(match)}
+                size="sm"
+                label="Copiar"
+                title="Copiar información completa y mercados"
+              />
               <DownloadCardButton filename={`analisis_${home.id}_vs_${away.id}`} />
             </div>
           </div>

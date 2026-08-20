@@ -15,6 +15,8 @@ import { pluralize, relativeDayLabel } from "@/utils/formatters";
 import { getTodayIso } from "@/services/match-service";
 import { checkMatchDataAudit } from "@/utils/data-audit";
 import { DownloadCardButton } from "@/components/shared/download-card-button";
+import { CopyMatchButton } from "@/components/shared/copy-match-button";
+import { formatFootballMatchToClipboard } from "@/lib/clipboard-formatters";
 
 export function MatchCard({ match }: { match: Match }) {
   const home = getTeamById(match.homeTeamId);
@@ -49,6 +51,12 @@ export function MatchCard({ match }: { match: Match }) {
           <span>{match.time}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          <CopyMatchButton
+            getText={() => formatFootballMatchToClipboard(match)}
+            label="Copiar"
+            size="sm"
+            title="Copiar toda la información y mercados de este partido"
+          />
           <DownloadCardButton filename={`partido_${home.id}_vs_${away.id}`} />
           <FavoriteButton type="match" refId={match.id} label={`${home.shortName} vs ${away.shortName}`} meta={competition?.name} />
         </div>

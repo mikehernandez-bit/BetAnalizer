@@ -8,6 +8,8 @@ import { TeamBadge } from "@/components/shared/team-badge";
 import { FormIndicator } from "@/components/shared/form-indicator";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { ExportButton } from "@/components/shared/export-button";
+import { CopyMatchButton } from "@/components/shared/copy-match-button";
+import { formatFootballAnalysisToClipboard } from "@/lib/clipboard-formatters";
 import { ConfidenceBadge } from "@/components/shared/confidence-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -105,6 +107,12 @@ export function AnalysisHeader({ analysis }: { analysis: AnalysisResult }) {
         </div>
 
         <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+          <CopyMatchButton
+            getText={() => formatFootballAnalysisToClipboard(analysis)}
+            label="Copiar info y mercados"
+            successLabel="¡Información copiada!"
+            variant="default"
+          />
           <FavoriteButton type="analysis" refId={analysis.id} label={`${home.shortName} vs ${away.shortName}`} meta={competition?.name} variant="full" />
           <ExportButton
             filename={`betanalyzer-${home.code}-vs-${away.code}.txt`}
