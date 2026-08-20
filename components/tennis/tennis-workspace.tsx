@@ -559,7 +559,9 @@ export function TennisWorkspace({ initialDay = "today" }: { initialDay?: TennisD
   const audit = summarizeTennisMarketAudits(marketAudits, pendingMarkets);
   const modelComparison = React.useMemo(() => compareTennisModels(tennisEvents, outcomes), [outcomes]);
   const eventDayGroups = React.useMemo(() => groupTennisEventsByDay(tennisEvents), []);
-  const selectedEventGroup = eventDayFilter === "today"
+  const selectedEventGroup = eventDayFilter === "yesterday"
+    ? { id: "yesterday", title: "Ayer", date: formatTennisEventDate(eventDayGroups.yesterdayKey), events: eventDayGroups.yesterday }
+    : eventDayFilter === "today"
     ? { id: "today", title: "Hoy", date: formatTennisEventDate(eventDayGroups.todayKey), events: eventDayGroups.today }
     : { id: "tomorrow", title: "Mañana", date: formatTennisEventDate(eventDayGroups.tomorrowKey), events: eventDayGroups.tomorrow };
 
@@ -579,31 +581,6 @@ export function TennisWorkspace({ initialDay = "today" }: { initialDay?: TennisD
       </TabsList>
 
       <TabsContent value="events" className="space-y-5">
-        <Card className="border-slate-800 bg-slate-900/90">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="size-4 shrink-0 text-emerald-400" />
-              <span className="text-xs font-semibold text-slate-300">Día de los encuentros:</span>
-              <Button
-                variant={eventDayFilter === "today" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleEventDayFilter("today")}
-                className={cn("text-xs font-bold", eventDayFilter === "today" ? "bg-emerald-600 text-white hover:bg-emerald-500" : "border-slate-800 bg-slate-950/60 text-slate-300")}
-              >
-                Hoy ({eventDayGroups.today.length})
-              </Button>
-              <Button
-                variant={eventDayFilter === "tomorrow" ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleEventDayFilter("tomorrow")}
-                className={cn("text-xs font-bold", eventDayFilter === "tomorrow" ? "bg-emerald-600 text-white hover:bg-emerald-500" : "border-slate-800 bg-slate-950/60 text-slate-300")}
-              >
-                Mañana ({eventDayGroups.tomorrow.length})
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">{selectedEventGroup.date}</p>
-          </CardContent>
-        </Card>
         {outcomeSyncError && <Alert variant="destructive"><AlertTriangle /><AlertTitle>Resultados guardados solo en este navegador</AlertTitle><AlertDescription>{outcomeSyncError}</AlertDescription></Alert>}
         {modelComparison.after.matches > 0 && (
           <Card className="border-brand-green/30">
@@ -628,6 +605,18 @@ export function TennisWorkspace({ initialDay = "today" }: { initialDay?: TennisD
           <Card className="border-brand-red/30"><CardContent><p className="text-xs text-muted-foreground">Fallos</p><p className="mt-1 flex items-center gap-2 text-2xl font-bold text-brand-red"><XCircle className="size-5" />{audit.misses}</p></CardContent></Card>
           <Card><CardContent><p className="text-xs text-muted-foreground">Efectividad de mercados</p><p className="mt-1 text-2xl font-bold">{audit.audited ? `${audit.accuracy}%` : "—"}</p><p className="text-xs text-muted-foreground">{audit.hits}/{audit.audited} selecciones</p></CardContent></Card>
         </div>
+        <Card className="border-slate-800 bg-slate-900/90">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="size-4 shrink-0 text-emerald-400" />
+              <span className="text-xs font-semibold text-slate-300">Día de los encuentros:</span>
+              <Button variant={eventDayFilter === "yesterday" ? "default" : "outline"} size="sm" onClick={() => handleEventDayFilter("yesterday")} className={cn("text-xs font-bold", eventDayFilter === "yesterday" ? "bg-emerald-600 text-white hover:bg-emerald-500" : "border-slate-800 bg-slate-950/60 text-slate-300")}>Ayer ({eventDayGroups.yesterday.length})</Button>
+              <Button variant={eventDayFilter === "today" ? "default" : "outline"} size="sm" onClick={() => handleEventDayFilter("today")} className={cn("text-xs font-bold", eventDayFilter === "today" ? "bg-emerald-600 text-white hover:bg-emerald-500" : "border-slate-800 bg-slate-950/60 text-slate-300")}>Hoy ({eventDayGroups.today.length})</Button>
+              <Button variant={eventDayFilter === "tomorrow" ? "default" : "outline"} size="sm" onClick={() => handleEventDayFilter("tomorrow")} className={cn("text-xs font-bold", eventDayFilter === "tomorrow" ? "bg-emerald-600 text-white hover:bg-emerald-500" : "border-slate-800 bg-slate-950/60 text-slate-300")}>Mañana ({eventDayGroups.tomorrow.length})</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">{selectedEventGroup.date}</p>
+          </CardContent>
+        </Card>
         <section className="space-y-3" aria-labelledby={`tennis-events-${selectedEventGroup.id}`}>
             <div className="flex items-center justify-between gap-3 border-b pb-2">
               <div className="flex items-center gap-2">

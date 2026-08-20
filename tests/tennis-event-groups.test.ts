@@ -11,7 +11,7 @@ describe("tennis event day groups", () => {
     const groups = groupTennisEventsByDay([
       event("today", "2026-08-18"),
       event("tomorrow", "2026-08-19"),
-      event("past", "2026-08-17"),
+      event("past", "2026-08-16"),
       event("later", "2026-08-20"),
     ], new Date(2026, 7, 18, 23, 55));
 
@@ -27,11 +27,24 @@ describe("tennis event day groups", () => {
     expect(formatTennisEventDate("2026-08-19").toLocaleLowerCase("es")).toContain("agosto");
   });
 
-  it("restores tomorrow only from a valid navigation parameter", () => {
+  it("restores a valid navigation parameter", () => {
     expect(normalizeTennisDayFilter("tomorrow")).toBe("tomorrow");
+    expect(normalizeTennisDayFilter("yesterday")).toBe("yesterday");
     expect(normalizeTennisDayFilter("today")).toBe("today");
     expect(normalizeTennisDayFilter("invalid")).toBe("today");
     expect(normalizeTennisDayFilter(["tomorrow", "today"])).toBe("today");
+  });
+
+  it("groups yesterday separately from today and tomorrow", () => {
+    const groups = groupTennisEventsByDay([
+      { id: "yesterday", input: { date: "2026-08-19" } } as never,
+      { id: "today", input: { date: "2026-08-20" } } as never,
+      { id: "tomorrow", input: { date: "2026-08-21" } } as never,
+    ], new Date(2026, 7, 20, 12));
+
+    expect(groups.yesterday).toHaveLength(1);
+    expect(groups.today).toHaveLength(1);
+    expect(groups.tomorrow).toHaveLength(1);
   });
 
   it("ordena los eventos de hoy desde la hora más temprana a la más tardía", () => {

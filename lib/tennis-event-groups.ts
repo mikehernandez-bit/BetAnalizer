@@ -1,14 +1,17 @@
 import type { TennisStoredEvent } from "@/types/tennis";
 
-export type TennisDayFilter = "today" | "tomorrow";
+export type TennisDayFilter = "yesterday" | "today" | "tomorrow";
 
 export function normalizeTennisDayFilter(value: string | string[] | undefined): TennisDayFilter {
+  if (value === "yesterday") return "yesterday";
   return value === "tomorrow" ? "tomorrow" : "today";
 }
 
 export interface TennisEventDayGroups {
   todayKey: string;
+  yesterdayKey: string;
   tomorrowKey: string;
+  yesterday: TennisStoredEvent[];
   today: TennisStoredEvent[];
   tomorrow: TennisStoredEvent[];
   other: TennisStoredEvent[];
@@ -48,17 +51,22 @@ export function sortTennisEventsByTime(events: TennisStoredEvent[]): TennisStore
 
 export function groupTennisEventsByDay(events: TennisStoredEvent[], now = new Date()): TennisEventDayGroups {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
   const todayKey = localDateKey(today);
+  const yesterdayKey = localDateKey(yesterday);
   const tomorrowKey = localDateKey(tomorrow);
 
   return {
     todayKey,
+    yesterdayKey,
     tomorrowKey,
+    yesterday: sortTennisEventsByTime(events.filter((event) => event.input.date === yesterdayKey)),
     today: sortTennisEventsByTime(events.filter((event) => event.input.date === todayKey)),
     tomorrow: sortTennisEventsByTime(events.filter((event) => event.input.date === tomorrowKey)),
-    other: sortTennisEventsByTime(events.filter((event) => event.input.date !== todayKey && event.input.date !== tomorrowKey)),
+    other: sortTennisEventsByTime(events.filter((event) => event.input.date !== yesterdayKey && event.input.date !== todayKey && event.input.date !== tomorrowKey)),
   };
 }
 

@@ -307,10 +307,43 @@ function playerStrength(profile: TennisPlayerProfile): number {
 function sampleConfidence(p1: TennisPlayerProfile, p2: TennisPlayerProfile): number {
   const completion = clamp(Math.min(p1.matchesUsed, p2.matchesUsed) / 20, 0, 1);
   const surface = clamp(Math.min(p1.surfaceMatches, p2.surfaceMatches) / 8, 0, 1);
-  return round(58 + completion * 22 + surface * 12);
+  return round(52 + completion * 24 + surface * 14);
 }
 
-function recommendation(probability: number, confidence: number): TennisMarketPrediction["recommendation"] {
+function recommendation(
+  probability: number,
+  confidence: number,
+  marketId?: string,
+  selection?: string
+): TennisMarketPrediction["recommendation"] {
+  // Mercados volátiles de sets individuales (marcadores exactos, ganadores de set y totales de set)
+  if (
+    marketId &&
+    (marketId.includes("score") ||
+      marketId === "set-1-winner" ||
+      marketId === "set-2-winner" ||
+      marketId === "set-1-games-handicap" ||
+      marketId === "set-2-games-handicap" ||
+      marketId === "set-1-total" ||
+      marketId === "set-2-total")
+  ) {
+    return "evitar";
+  }
+
+  // Predecir que un jugador NO gana ningún set ("No") tiene alta varianza en tenis; solo "Sí" con solidez califica
+  if (marketId && (marketId === "player-1-wins-set" || marketId === "player-2-wins-set")) {
+    if (selection === "No") return "evitar";
+    if (probability >= 75 && confidence >= 68) return "fuerte";
+    if (probability >= 65 && confidence >= 62) return "moderada";
+    return "evitar";
+  }
+
+  if (marketId === "match-total-games") {
+    if (probability >= 70 && confidence >= 70) return "fuerte";
+    if (probability >= 64 && confidence >= 64) return "moderada";
+    return "evitar";
+  }
+
   if (probability >= 70 && confidence >= 70) return "fuerte";
   if (probability >= 60 && confidence >= 60) return "moderada";
   return "evitar";
@@ -323,10 +356,15 @@ function market(
   selection: string,
   probability: number,
   confidence: number,
-  evidence: string[]
+  evidence: string[],
+  modelVersion: TennisModelVersion = "calibrated"
 ): TennisMarketPrediction {
   const boundedProbability = round(clamp(probability, 5, 95));
   const boundedConfidence = round(clamp(confidence, 30, 95));
+  const rec = modelVersion === "legacy"
+    ? (boundedProbability >= 70 && boundedConfidence >= 70 ? "fuerte" : boundedProbability >= 60 && boundedConfidence >= 60 ? "moderada" : "evitar")
+    : recommendation(boundedProbability, boundedConfidence, id, selection);
+
   return {
     id,
     category,
@@ -334,7 +372,7 @@ function market(
     selection,
     probability: boundedProbability,
     confidence: boundedConfidence,
-    recommendation: recommendation(boundedProbability, boundedConfidence),
+    recommendation: rec,
     evidence,
   };
 }
@@ -403,8 +441,6 @@ export function analyzeTennisMatch(input: TennisMatchInput, modelVersion: Tennis
   const p1Set1 = round(clamp(50 + (p1.firstSetWinRate - p2.firstSetWinRate) * 0.42, 20, 80));
   const p1Set2 = round(clamp(50 + (p1.secondSetWinRate - p2.secondSetWinRate) * 0.42, 20, 80));
   const confidence = sampleConfidence(p1, p2);
-  // La versión anterior decidía el favorito después de redondear. Un 49.95%
-  // se convertía en 50% y favorecía siempre al jugador 1 por orden de carga.
   const favoriteIsP1 = modelVersion === "legacy" ? p1MatchProbability >= 50 : p1MatchProbabilityRaw >= 50;
   const favorite = favoriteIsP1 ? input.player1.name : input.player2.name;
   const favoriteProbability = Math.max(p1MatchProbability, p2MatchProbability);
@@ -441,6 +477,16 @@ export function analyzeTennisMatch(input: TennisMatchInput, modelVersion: Tennis
     : `3-${bothWinSetProbability >= 55 ? 1 : 0}`;
   const score = exactSetScore(favoriteSetProbability);
 
+  const p1WinsSetProb = favoriteIsP1
+    ? round(clamp(100 - (100 - favoriteProbability) ** 2 / 100, 75, 96))
+    : round(clamp(p1.setWinRate * 0.6 + bothWinSetProbability * 0.4, 25, 80));
+  const p2WinsSetProb = !favoriteIsP1
+    ? round(clamp(100 - (100 - favoriteProbability) ** 2 / 100, 75, 96))
+    : round(clamp(p2.setWinRate * 0.6 + bothWinSetProbability * 0.4, 25, 80));
+
+  const p1WinsSetSelection = modelVersion === "legacy" ? (favoriteIsP1 || bothWinSetProbability >= 50 ? "Sí" : "No") : (p1WinsSetProb >= 50 ? "Sí" : "No");
+  const p2WinsSetSelection = modelVersion === "legacy" ? (!favoriteIsP1 || bothWinSetProbability >= 50 ? "Sí" : "No") : (p2WinsSetProb >= 50 ? "Sí" : "No");
+
   const commonEvidence = [
     `${input.player1.name}: ${p1.winRate}% de victorias (${p1.matchesUsed} finalizados).`,
     `${input.player2.name}: ${p2.winRate}% de victorias (${p2.matchesUsed} finalizados).`,
@@ -451,23 +497,23 @@ export function analyzeTennisMatch(input: TennisMatchInput, modelVersion: Tennis
   ];
 
   const markets: TennisMarketPrediction[] = [
-    market("match-winner", "match_winner", "Ganador", favorite, favoriteProbability, confidence, commonEvidence),
-    market("set-1-winner", "set_winner", "Ganador del set 1", set1Favorite, set1Probability, confidence - 4, [`Rendimiento en primeros sets: ${p1.firstSetWinRate}% vs ${p2.firstSetWinRate}%.`]),
-    market("set-2-winner", "set_winner", "Ganador del set 2", set2Favorite, set2Probability, confidence - 6, [`Rendimiento en segundos sets: ${p1.secondSetWinRate}% vs ${p2.secondSetWinRate}%.`]),
-    market("match-total-games", "match_total_games", "Más/Menos de juegos", `${chooseOver ? "Más" : "Menos"} de ${totalLine} juegos`, totalProbability, confidence - 2, [`Promedio combinado y ajustado al formato: ${projectedTotalGames.toFixed(1)} juegos.`, `${round(overObserved)}% de la muestra supera la línea.`]),
-    market("total-games-handicap", "total_games_handicap", "Total de games hándicap", `${favorite} ${favoriteGamesHandicap > 0 ? "+" : ""}${favoriteGamesHandicap} juegos`, clamp(favoriteProbability + (favoriteGamesHandicap > 0 ? 14 : -3), 35, 90), confidence - 3, [`Diferencial medio de juegos: ${(favoriteIsP1 ? p1.averageGamesWon - p1.averageGamesLost : p2.averageGamesWon - p2.averageGamesLost).toFixed(1)}.`]),
-    market("match-handicap", "match_set_handicap", "Hándicap del partido", `${favorite} ${matchSetHandicap > 0 ? "+" : ""}${matchSetHandicap} sets`, clamp(favoriteProbability + (matchSetHandicap > 0 ? 16 : -8), 35, 92), confidence - 3, [`Formato al mejor de ${input.bestOf}; proyección ${projectedScore}.`]),
-    market("set-1-games-handicap", "set_games_handicap", "Hándicap de games set 1", `${set1Favorite} +1.5 juegos`, clamp(set1Probability + 15, 45, 92), confidence - 5, [`La protección +1.5 se apoya en la tasa de primeros sets.`]),
-    market("set-2-games-handicap", "set_games_handicap", "Hándicap de games set 2", `${set2Favorite} +1.5 juegos`, clamp(set2Probability + 15, 45, 92), confidence - 7, [`La protección +1.5 se apoya en la tasa de segundos sets.`]),
-    market("set-1-total", "set_total_games", "Total de juegos set 1", set1TotalSelection, set1TotalProbability, confidence - 8, [modelVersion === "legacy" ? `Equilibrio estimado del set: ${round(100 - favoriteSetProbability)}%.` : `Frecuencia observada sobre 9.5 juegos en primeros sets: ${round(set1OverProbability)}%.`]),
-    market("set-2-total", "set_total_games", "Total de juegos set 2", set2TotalSelection, set2TotalProbability, confidence - 10, [modelVersion === "legacy" ? "Se reduce la confianza por ajustes tácticos después del primer set." : `Frecuencia observada sobre 9.5 juegos en segundos sets: ${round(set2OverProbability)}%.`]),
-    market("set-1-score", "set_score", "Puntuación del set 1", `${set1Favorite} ${score}`, clamp(set1Probability - 15, 25, 60), confidence - 20, ["El marcador exacto tiene mayor varianza que el ganador del set."]),
-    market("set-2-score", "set_score", "Puntuación del set 2", `${set2Favorite} ${score}`, clamp(set2Probability - 17, 22, 58), confidence - 23, ["El segundo set depende de lo ocurrido en el primero."]),
-    market("total-sets", "match_total_sets", "Cantidad de sets", `${bothWinSetProbability >= 50 ? "Más" : "Menos"} de ${minSets + 0.5} sets`, Math.max(bothWinSetProbability, 100 - bothWinSetProbability), confidence - 5, [`Probabilidad de que ambos ganen un set: ${round(bothWinSetProbability)}%.`]),
-    market("both-win-set", "both_win_set", "Ambos jugadores ganan un set", bothWinSetProbability >= 50 ? "Sí" : "No", Math.max(bothWinSetProbability, 100 - bothWinSetProbability), confidence - 5, [`Fortaleza estimada del no favorito para ganar un set: ${round(underdogWinsSetProbability)}%.`]),
-    market("correct-match-score", "correct_set_score", "Apuesta de set: marcador correcto", `${favorite} gana ${projectedScore}`, clamp(favoriteProbability - (bothWinSetProbability >= 48 ? 18 : 12), 25, 68), confidence - 18, ["El marcador correcto se muestra como escenario, no como selección fuerte."]),
-    market("player-1-wins-set", "player_wins_set", `${input.player1.name} gana un set`, modelVersion === "legacy" || favoriteIsP1 || bothWinSetProbability >= 50 ? "Sí" : "No", modelVersion === "legacy" ? clamp(100 - Math.pow((100 - (p1Set1 + p1Set2) / 2) / 100, minSets) * 100, 15, 96) : (favoriteIsP1 ? clamp(100 - (100 - favoriteProbability) ** 2 / 100, 55, 96) : Math.max(bothWinSetProbability, 100 - bothWinSetProbability)), confidence - 4, [`Tasa histórica de sets ganados: ${p1.setWinRate}%.`]),
-    market("player-2-wins-set", "player_wins_set", `${input.player2.name} gana un set`, modelVersion === "legacy" || !favoriteIsP1 || bothWinSetProbability >= 50 ? "Sí" : "No", modelVersion === "legacy" ? clamp(100 - Math.pow(((p1Set1 + p1Set2) / 2) / 100, minSets) * 100, 15, 96) : (!favoriteIsP1 ? clamp(100 - (100 - favoriteProbability) ** 2 / 100, 55, 96) : Math.max(bothWinSetProbability, 100 - bothWinSetProbability)), confidence - 4, [`Tasa histórica de sets ganados: ${p2.setWinRate}%.`]),
+    market("match-winner", "match_winner", "Ganador", favorite, favoriteProbability, confidence, commonEvidence, modelVersion),
+    market("set-1-winner", "set_winner", "Ganador del set 1", set1Favorite, set1Probability, confidence - 4, [`Rendimiento en primeros sets: ${p1.firstSetWinRate}% vs ${p2.firstSetWinRate}%.`], modelVersion),
+    market("set-2-winner", "set_winner", "Ganador del set 2", set2Favorite, set2Probability, confidence - 6, [`Rendimiento en segundos sets: ${p1.secondSetWinRate}% vs ${p2.secondSetWinRate}%.`], modelVersion),
+    market("match-total-games", "match_total_games", "Más/Menos de juegos", `${chooseOver ? "Más" : "Menos"} de ${totalLine} juegos`, totalProbability, confidence - 2, [`Promedio combinado y ajustado al formato: ${projectedTotalGames.toFixed(1)} juegos.`, `${round(overObserved)}% de la muestra supera la línea.`], modelVersion),
+    market("total-games-handicap", "total_games_handicap", "Total de games hándicap", `${favorite} ${favoriteGamesHandicap > 0 ? "+" : ""}${favoriteGamesHandicap} juegos`, clamp(favoriteProbability + (favoriteGamesHandicap > 0 ? 14 : -3), 35, 90), confidence - 3, [`Diferencial medio de juegos: ${(favoriteIsP1 ? p1.averageGamesWon - p1.averageGamesLost : p2.averageGamesWon - p2.averageGamesLost).toFixed(1)}.`], modelVersion),
+    market("match-handicap", "match_set_handicap", "Hándicap del partido", `${favorite} ${matchSetHandicap > 0 ? "+" : ""}${matchSetHandicap} sets`, clamp(favoriteProbability + (matchSetHandicap > 0 ? 16 : -8), 35, 92), confidence - 3, [`Formato al mejor de ${input.bestOf}; proyección ${projectedScore}.`], modelVersion),
+    market("set-1-games-handicap", "set_games_handicap", "Hándicap de games set 1", `${set1Favorite} +1.5 juegos`, clamp(set1Probability + 5, 45, 82), confidence - 8, [`La protección +1.5 se apoya en la tasa de primeros sets.`], modelVersion),
+    market("set-2-games-handicap", "set_games_handicap", "Hándicap de games set 2", `${set2Favorite} +1.5 juegos`, clamp(set2Probability + 5, 45, 82), confidence - 10, [`La protección +1.5 se apoya en la tasa de segundos sets.`], modelVersion),
+    market("set-1-total", "set_total_games", "Total de juegos set 1", set1TotalSelection, set1TotalProbability, confidence - 8, [modelVersion === "legacy" ? `Equilibrio estimado del set: ${round(100 - favoriteSetProbability)}%.` : `Frecuencia observada sobre 9.5 juegos en primeros sets: ${round(set1OverProbability)}%.`], modelVersion),
+    market("set-2-total", "set_total_games", "Total de juegos set 2", set2TotalSelection, set2TotalProbability, confidence - 10, [modelVersion === "legacy" ? "Se reduce la confianza por ajustes tácticos después del primer set." : `Frecuencia observada sobre 9.5 juegos en segundos sets: ${round(set2OverProbability)}%.`], modelVersion),
+    market("set-1-score", "set_score", "Puntuación del set 1", `${set1Favorite} ${score}`, clamp(set1Probability - 15, 25, 60), confidence - 20, ["El marcador exacto tiene mayor varianza que el ganador del set."], modelVersion),
+    market("set-2-score", "set_score", "Puntuación del set 2", `${set2Favorite} ${score}`, clamp(set2Probability - 17, 22, 58), confidence - 23, ["El segundo set depende de lo ocurrido en el primero."], modelVersion),
+    market("total-sets", "match_total_sets", "Cantidad de sets", `${bothWinSetProbability >= 50 ? "Más" : "Menos"} de ${minSets + 0.5} sets`, Math.max(bothWinSetProbability, 100 - bothWinSetProbability), confidence - 5, [`Probabilidad de que ambos ganen un set: ${round(bothWinSetProbability)}%.`], modelVersion),
+    market("both-win-set", "both_win_set", "Ambos jugadores ganan un set", bothWinSetProbability >= 50 ? "Sí" : "No", Math.max(bothWinSetProbability, 100 - bothWinSetProbability), confidence - 5, [`Fortaleza estimada del no favorito para ganar un set: ${round(underdogWinsSetProbability)}%.`], modelVersion),
+    market("correct-match-score", "correct_set_score", "Apuesta de set: marcador correcto", `${favorite} gana ${projectedScore}`, clamp(favoriteProbability - (bothWinSetProbability >= 48 ? 18 : 12), 25, 68), confidence - 18, ["El marcador correcto se muestra como escenario, no como selección fuerte."], modelVersion),
+    market("player-1-wins-set", "player_wins_set", `${input.player1.name} gana un set`, p1WinsSetSelection, modelVersion === "legacy" ? clamp(100 - Math.pow((100 - (p1Set1 + p1Set2) / 2) / 100, minSets) * 100, 15, 96) : (p1WinsSetSelection === "Sí" ? p1WinsSetProb : (100 - p1WinsSetProb)), confidence - 4, [`Tasa histórica de sets ganados: ${p1.setWinRate}%.`], modelVersion),
+    market("player-2-wins-set", "player_wins_set", `${input.player2.name} gana un set`, p2WinsSetSelection, modelVersion === "legacy" ? clamp(100 - Math.pow(((p1Set1 + p1Set2) / 2) / 100, minSets) * 100, 15, 96) : (p2WinsSetSelection === "Sí" ? p2WinsSetProb : (100 - p2WinsSetProb)), confidence - 4, [`Tasa histórica de sets ganados: ${p2.setWinRate}%.`], modelVersion),
   ];
 
   const warnings: string[] = [];
