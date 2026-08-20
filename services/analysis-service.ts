@@ -30,7 +30,7 @@ export function parseAnalysisId(id: string): { homeTeamId: string; awayTeamId: s
  * si el usuario carga cuotas reales de su casa de apuestas en el paso
  * "Cuotas" del asistente — nunca con un valor de referencia fabricado.
  */
-export function defaultAnalysisConfig(homeTeamId: string, awayTeamId: string, matchCount: MatchSampleSize = 10): AnalysisConfig {
+export function defaultAnalysisConfig(homeTeamId: string, awayTeamId: string, matchCount: MatchSampleSize = 15): AnalysisConfig {
   const homeTeam = getTeamById(homeTeamId);
   return {
     competitionId: homeTeam?.competitionId ?? "uefa-champions-league",

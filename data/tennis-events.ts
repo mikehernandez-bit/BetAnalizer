@@ -2190,6 +2190,168 @@ export const NAKAGAWA_CANCUN_HISTORY: TennisHistoryMatch[] = [
   match("2026-02-21", "Mexico Acapulco", "hard", "Tšak Lam Koleman Wong", [set(3, 6), set(2, 6)], "completed", true, "opponent"),
 ];
 
+/**
+ * Transcripción de las 20 filas de las capturas de Henrivitse Rotša.
+ * Todos los sets están orientados a Rocha, incluso cuando aparece abajo.
+ */
+export const ROCHA_CANCUN_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-18", "Cancun", "hard", "Seong Tšan Hong", [set(6, 4), set(6, 1)], "completed", true, "player"),
+  match("2026-08-13", "USA Cincinnati", "hard", "Nikolas Mežia", [set(5, 7), set(6, 4), set(3, 6)], "completed", true, "opponent"),
+  match("2026-08-12", "USA Cincinnati", "hard", "Markos Giron", [set(6, 4), set(7, 6, 8, 6)], "completed", false, "player"),
+  match("2026-08-01", "Canada Montreal", "hard", "Martin Damm Žr", [set(3, 6), set(6, 7, 3, 7)], "completed", false, "opponent"),
+  match("2026-07-20", "Portugal", "clay", "Pedro Martínez", [set(5, 7), set(5, 7)], "completed", true, "opponent"),
+  match("2026-07-13", "Croatia Umag", "clay", "Damir Dzumhur", [set(2, 6), set(1, 6)], "completed", false, "opponent"),
+  match("2026-06-22", "Wimbledon", "grass", "Nikolas Mežia", [set(4, 6), set(7, 6, 8, 6), set(2, 6)], "completed", true, "opponent"),
+  match("2026-06-15", "ATP Challenger", "grass", "Tšristofer O'Konnell", [set(6, 7, 2, 7), set(1, 6)], "completed", true, "opponent"),
+  match("2026-06-12", "Great Britain Nottingham", "grass", "Darwin Blantš", [set(6, 7, 4, 7), set(6, 1), set(3, 6)], "completed", true, "opponent"),
+  match("2026-06-10", "Great Britain Nottingham", "grass", "Tšarles Brum", [set(6, 2), set(6, 2)], "completed", true, "player"),
+  match("2026-06-07", "Italy Perugia", "clay", "Daniel Mérida", [set(7, 6, 7, 5), set(6, 3)], "completed", true, "player"),
+  match("2026-06-06", "Italy Perugia", "clay", "Timofei Skatov", [set(6, 4), set(6, 2)], "completed", false, "player"),
+  match("2026-06-05", "Italy Perugia", "clay", "Remi Bertola", [set(6, 2), set(4, 6), set(6, 2)], "completed", true, "player"),
+  match("2026-06-04", "Italy Perugia", "clay", "Dusan Lažovic", [set(6, 4), set(7, 5)], "completed", true, "player"),
+  match("2026-06-02", "Italy Perugia", "clay", "Enriko Dolla Valle", [set(6, 4), set(7, 6, 9, 7)], "completed", true, "player"),
+  match("2026-05-20", "Roland-Garros", "clay", "Borna Gožo", [set(3, 6), set(6, 3), set(6, 7, 9, 11)], "completed", true, "opponent"),
+  match("2026-05-19", "Roland-Garros", "clay", "Zsombor Piros", [set(6, 4), set(7, 6)], "completed", true, "player"),
+  match("2026-05-11", "ATP Challenger", "clay", "Roman Safiullin", [set(7, 5), set(6, 7, 5, 7), set(2, 6)], "completed", true, "opponent"),
+  match("2026-05-04", "ROM", "clay", "Pablo Llamas Ruíz", [set(6, 4), set(3, 6), set(1, 6)], "completed", false, "opponent"),
+  match("2026-04-21", "Spain Madrid", "clay", "Adolfo Daniel Volležo", [set(1, 6), set(6, 4), set(2, 6)], "completed", false, "opponent"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Hubert Hurkacz.
+ * Todos los sets están orientados a Hurkacz, incluso cuando aparece abajo.
+ */
+export const HURKACZ_CANCUN_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-15", "USA Cincinnati", "hard", "Tommi Paul", [set(4, 6), set(7, 6, 7, 3), set(3, 6)], "completed", false, "opponent"),
+  match("2026-08-14", "USA Cincinnati", "hard", "Šo Šimabukuro", [set(6, 2), set(6, 4)], "completed", false, "player"),
+  match("2026-08-07", "Canada Montreal", "hard", "Botic van de Zandschulp", [set(6, 3), set(6, 7, 4, 7), set(5, 7)], "completed", false, "opponent"),
+  match("2026-08-05", "Canada Montreal", "hard", "Aležandro Tabilo", [set(6, 4), set(7, 6)], "completed", true, "player"),
+  match("2026-08-04", "Canada Montreal", "hard", "Markos Giron", [set(7, 5), set(4, 6), set(6, 2)], "completed", true, "player"),
+  match("2026-07-05", "Wimbledon", "grass", "Žan-Lennard Struff", [set(6, 3), set(7, 6, 7, 5), set(6, 7, 2, 7), set(5, 7), set(2, 4)], "retired", true, "opponent"),
+  match("2026-07-03", "Wimbledon", "grass", "Tommi Paul", [set(4, 6), set(7, 6, 7, 5), set(7, 5), set(6, 2)], "completed", true, "player"),
+  match("2026-07-01", "Wimbledon", "grass", "Sebastian Ofner", [set(7, 6, 10, 8), set(6, 4), set(6, 4)], "completed", true, "player"),
+  match("2026-06-29", "Wimbledon", "grass", "Kasper Ruud", [set(6, 4), set(6, 2), set(7, 6, 9, 7)], "completed", false, "player"),
+  match("2026-06-17", "Germany Halle", "grass", "Daniel Altmaier", [set(6, 3), set(3, 6), set(5, 7)], "completed", true, "opponent"),
+  match("2026-06-16", "Germany Halle", "grass", "Andrei Rublev", [set(6, 3), set(6, 2)], "completed", false, "player"),
+  match("2026-06-09", "ATP S-Hertogenbosch", "grass", "Marton Fucsovics", [set(6, 3), set(6, 7, 5, 7), set(6, 7, 4, 7)], "completed", true, "opponent"),
+  match("2026-05-28", "Roland-Garros", "clay", "Francis Tiafoe", [set(7, 6, 7, 5), set(6, 7, 5, 7), set(4, 6), set(7, 6, 7, 1), set(4, 6)], "completed", true, "opponent"),
+  match("2026-05-25", "Roland-Garros", "clay", "Žaume Antoni Munar clar", [set(6, 3), set(6, 3), set(2, 6), set(6, 3)], "completed", false, "player"),
+  match("2026-05-06", "ROM", "clay", "Jannick Hanfmann", [set(7, 6, 7, 3), set(6, 7, 2, 7), set(2, 6)], "completed", true, "opponent"),
+  match("2026-05-03", "ATP Challenger", "clay", "Matteo Arnaldi", [set(4, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-05-02", "ATP Challenger", "clay", "Roman Andres Burrutšaga", [set(4, 6), set(7, 6, 7, 3), set(6, 3)], "completed", true, "player"),
+  match("2026-05-01", "ATP Challenger", "clay", "Matteo Berrettini", [set(4, 6), set(6, 3), set(6, 4)], "completed", false, "player"),
+  match("2026-04-30", "ATP Challenger", "clay", "Emilio Nava", [set(6, 4), set(6, 1)], "completed", false, "player"),
+  match("2026-04-28", "ATP Challenger", "clay", "Zatšari Svažda", [set(6, 2), set(7, 6, 10, 8)], "completed", false, "player"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Vit Kopriva.
+ * Todos los sets están orientados a Kopriva, incluso cuando aparece abajo.
+ */
+export const KOPRIVA_CANCUN_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-14", "USA Cincinnati", "hard", "kuentin Halis", [set(6, 7, 5, 7), set(4, 6)], "completed", true, "opponent"),
+  match("2026-08-04", "Canada Montreal", "hard", "Žiri Lehecka", [set(4, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-08-03", "Canada Montreal", "hard", "Aleksis Galarniu", [set(6, 4), set(6, 4)], "completed", false, "player"),
+  match("2026-07-20", "Austria Kitzbuhel", "clay", "Ignacio Buse", [set(5, 7), set(7, 6, 7, 3), set(1, 6)], "completed", true, "opponent"),
+  match("2026-07-13", "Croatia Umag", "clay", "Dino Prizmic", [set(1, 6), set(3, 6)], "completed", true, "opponent"),
+  match("2026-06-30", "Wimbledon", "grass", "Žan Tšoinski", [set(3, 6), set(5, 7), set(2, 6)], "completed", true, "opponent"),
+  match("2026-06-25", "ATP Mallorca", "grass", "Esan kuinn", [set(7, 5), set(5, 7), set(3, 6)], "completed", false, "opponent"),
+  match("2026-06-24", "ATP Mallorca", "grass", "Ignacio Buse", [set(7, 5), set(6, 1)], "completed", true, "player"),
+  match("2026-06-23", "ATP Mallorca", "grass", "Damir Dzumhur", [set(6, 3), set(6, 4)], "completed", false, "player"),
+  match("2026-06-16", "Germany Halle", "grass", "Aleksander Zverev", [set(3, 6), set(6, 4), set(2, 6)], "completed", false, "opponent"),
+  match("2026-06-04", "Czech Republic Prostejov", "clay", "Vitalii Satško", [set(1, 6), set(6, 4), set(6, 7, 4, 7)], "completed", false, "opponent"),
+  match("2026-06-02", "Czech Republic Prostejov", "clay", "Andrež Martin", [set(6, 0), set(6, 4)], "completed", false, "player"),
+  match("2026-05-28", "Roland-Garros", "clay", "Martin Landaluse", [set(6, 1), set(6, 2), set(4, 6), set(5, 7), set(0, 6)], "completed", false, "opponent"),
+  match("2026-05-26", "Roland-Garros", "clay", "Korentin Mautet", [set(6, 3), set(5, 7), set(6, 4), set(3, 6), set(6, 3)], "completed", true, "player"),
+  match("2026-05-19", "ATP Hamburg", "clay", "Feliks Auger-Aliassime", [set(5, 7), set(1, 6)], "completed", false, "opponent"),
+  match("2026-05-08", "ROM", "clay", "Ugo Humbert", [set(3, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-05-06", "ROM", "clay", "Fabian Marozsan", [set(6, 3), set(6, 3)], "completed", false, "player"),
+  match("2026-04-28", "Spain Madrid", "clay", "Rafael Žodar", [set(5, 7), set(0, 6)], "completed", true, "opponent"),
+  match("2026-04-26", "Spain Madrid", "clay", "Arsur Rinderknetš", [set(6, 4), set(3, 6)], "retired", true, "player"),
+  match("2026-04-24", "Spain Madrid", "clay", "Andrei Rublev", [set(6, 3), set(6, 4)], "completed", false, "player"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Gausier Onclin (Cancún 1/8).
+ * Todos los sets están orientados a Onclin, incluso cuando aparece abajo.
+ */
+export const ONCLIN_CANCUN_R8_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-19", "Cancun", "hard", "Timofei Skatov", [set(2, 6), set(6, 2), set(6, 3)], "completed", true, "player"),
+  match("2026-08-18", "Cancun", "hard", "Alejandro Moro Cañaas", [set(6, 4), set(5, 7), set(6, 4)], "completed", true, "player"),
+  match("2026-08-17", "Cancun", "hard", "Rjan Seggerman", [set(6, 3), set(6, 4)], "completed", true, "player"),
+  match("2026-08-13", "ATP Challenger", "hard", "Andrés Andrade", [set(3, 6), set(3, 6)], "completed", true, "opponent"),
+  match("2026-08-11", "ATP Challenger", "hard", "Tiler Zink", [set(6, 4), set(3, 6), set(6, 3)], "completed", true, "player"),
+  match("2026-07-25", "Finland Tampere", "clay", "Diego Dedura-Palomero", [set(2, 6), set(6, 2), set(6, 7, 2, 7)], "completed", false, "opponent"),
+  match("2026-07-24", "Finland Tampere", "clay", "Tom Gentzš", [set(6, 2), set(6, 7, 5, 7), set(6, 3)], "completed", true, "player"),
+  match("2026-07-22", "Finland Tampere", "clay", "Niels Visker", [set(6, 2), set(7, 6, 8, 6)], "completed", true, "player"),
+  match("2026-07-20", "Finland Tampere", "clay", "Duže Aždukovic", [set(7, 6, 15, 13), set(6, 1)], "completed", true, "player"),
+  match("2026-07-14", "Amersfoort", "clay", "Sižs Bugaard", [set(6, 3), set(6, 7, 3, 7), set(4, 6)], "completed", false, "opponent"),
+  match("2026-07-09", "ATP Challenger", "clay", "Florian Broska", [set(7, 5), set(6, 7, 5, 7), set(2, 6)], "completed", true, "opponent"),
+  match("2026-07-07", "ATP Challenger", "clay", "Gerard Kampana Li", [set(4, 6), set(6, 2), set(6, 2)], "completed", true, "player"),
+  match("2026-06-24", "Wimbledon", "grass", "Šintaro Motšizuki", [set(2, 6), set(6, 4), set(3, 6)], "completed", true, "opponent"),
+  match("2026-06-22", "Wimbledon", "grass", "Lorenzo Giustino", [set(6, 3), set(7, 5)], "completed", false, "player"),
+  match("2026-06-15", "ATP Challenger", "grass", "Kirian Žacvitset", [set(6, 7, 6, 8), set(6, 7, 4, 7)], "completed", true, "opponent"),
+  match("2026-06-10", "STU", "grass", "Giovanni Mpetshi Perrikard", [set(6, 7, 1, 7), set(2, 6)], "completed", false, "opponent"),
+  match("2026-06-08", "STU", "grass", "Fabian Marozsan", [set(7, 6, 8, 6), set(6, 3)], "completed", true, "player"),
+  match("2026-06-07", "STU", "grass", "Marc-Andri Huesler", [set(7, 6, 7, 1), set(6, 4)], "completed", false, "player"),
+  match("2026-06-06", "STU", "grass", "Orlando Luz", [set(6, 1), set(6, 3)], "completed", false, "player"),
+  match("2026-06-02", "ATP Challenger", "clay", "Marvin Moeller", [set(7, 5), set(1, 6), set(4, 6)], "completed", false, "opponent"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Žuan Karlos Prado Angelo.
+ * Todos los sets están orientados a Prado Angelo, incluso cuando aparece abajo.
+ */
+export const PRADO_ANGELO_KINGSTON_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-19", "ATP Challenger Kingston", "hard", "Andrés Andrade", [set(3, 6), set(6, 3), set(6, 2)], "completed", true, "player"),
+  match("2026-08-18", "ATP Challenger Kingston", "hard", "Žuan Pablo Fikovich", [set(6, 3), set(6, 2)], "completed", true, "player"),
+  match("2026-07-31", "ATP Challenger San Marino", "clay", "Facundo Diaz Akosta", [set(2, 6), set(6, 4), set(1, 6)], "completed", false, "opponent"),
+  match("2026-07-29", "ATP Challenger San Marino", "clay", "Hugo Dellien", [set(7, 6, 7, 4)], "retired", true, "player"),
+  match("2026-07-27", "ATP Challenger San Marino", "clay", "Daniel Rinkon", [set(6, 4), set(6, 7, 5, 7), set(6, 3)], "completed", false, "player"),
+  match("2026-07-18", "Portugal Porto", "clay", "Taro Daniel", [set(4, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-07-15", "Croatia Umag", "clay", "Damir Dzumhur", [set(6, 7, 2, 7), set(1, 6)], "completed", true, "opponent"),
+  match("2026-07-14", "Croatia Umag", "clay", "Lukas Neumair", [set(6, 3), set(7, 6, 8, 6)], "completed", false, "player"),
+  match("2026-07-12", "Croatia Umag", "clay", "Nikolas Santšez Izvitsierdo", [set(6, 3), set(7, 6, 7, 4)], "completed", true, "player"),
+  match("2026-07-11", "Croatia Umag", "clay", "Maždandzic, Marc", [set(6, 4), set(6, 3)], "completed", true, "player"),
+  match("2026-07-07", "Germany Braunschweig", "clay", "Adolfo Daniel Volležo", [set(2, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-06-30", "Italy Milan", "clay", "David Žorda Santšis", [set(2, 6), set(6, 7, 2, 7)], "completed", false, "opponent"),
+  match("2026-06-22", "Wimbledon", "grass", "Daniel Evans", [set(6, 7, 2, 7), set(3, 6)], "completed", true, "opponent"),
+  match("2026-05-26", "Roland-Garros", "clay", "Martin Landaluse", [set(3, 6), set(6, 4), set(2, 6), set(7, 6, 7, 3), set(4, 6)], "completed", false, "opponent"),
+  match("2026-05-21", "Roland-Garros", "clay", "Tšak Lam Koleman Wong", [set(6, 4), set(3, 6), set(6, 3)], "completed", false, "player"),
+  match("2026-05-20", "Roland-Garros", "clay", "Daniil Glinka", [set(6, 3), set(6, 4)], "completed", false, "player"),
+  match("2026-05-18", "Roland-Garros", "clay", "Mackenzie Mcdonald", [set(6, 4), set(7, 6)], "completed", true, "player"),
+  match("2026-05-12", "ATP Challenger Zagreb", "clay", "Lindro Riedi", [set(7, 6, 7, 5), set(1, 6), set(3, 6)], "completed", true, "opponent"),
+  match("2026-05-07", "Italy Francavilla", "clay", "Rjan Seggerman", [set(7, 6, 7, 5), set(5, 7), set(6, 7, 5, 7)], "completed", true, "opponent"),
+  match("2026-05-06", "Italy Francavilla", "clay", "Buvaisar Gadamauri", [set(6, 4), set(6, 4)], "completed", true, "player"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Pedro Martínez.
+ * Todos los sets están orientados a Martínez, incluso cuando aparece abajo.
+ */
+export const MARTINEZ_KINGSTON_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-19", "ATP Challenger Kingston", "hard", "Garrett Žohns", [set(6, 4), set(6, 1)], "completed", false, "player"),
+  match("2026-08-18", "ATP Challenger Kingston", "hard", "Evan Žu", [set(7, 5), set(6, 4)], "completed", false, "player"),
+  match("2026-07-28", "ATP Challenger San Marino", "clay", "Hugo Dellien", [set(1, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-07-23", "Portugal Porto", "clay", "Luciano Darderi", [set(0, 6), set(1, 6)], "completed", true, "opponent"),
+  match("2026-07-20", "Portugal Porto", "clay", "Henrivitse Rotša", [set(7, 5), set(7, 5)], "completed", false, "player"),
+  match("2026-07-19", "Portugal Porto", "clay", "Timofei Skatov", [set(6, 3), set(6, 2)], "completed", true, "player"),
+  match("2026-07-18", "Portugal Porto", "clay", "David Žorda Santšis", [set(6, 0), set(6, 4)], "completed", true, "player"),
+  match("2026-07-14", "Switzerland Gstaad", "clay", "Jannick Hanfmann", [set(6, 7, 6, 8), set(1, 6)], "completed", true, "opponent"),
+  match("2026-07-08", "ATP Challenger Braunschweig", "clay", "Maks Kasnikowski", [set(6, 4), set(3, 6), set(5, 7)], "completed", true, "opponent"),
+  match("2026-07-07", "ATP Challenger Braunschweig", "clay", "S D Pražwal Dev", [set(6, 3), set(4, 6), set(6, 2)], "completed", true, "player"),
+  match("2026-06-22", "Wimbledon", "grass", "Otto Virtanen", [set(4, 6), set(6, 1), set(1, 6)], "completed", false, "opponent"),
+  match("2026-06-16", "ATP Challenger", "clay", "Daniel Rinkon", [set(6, 7, 5, 7), set(6, 7, 5, 7)], "completed", true, "opponent"),
+  match("2026-06-11", "France Lyon", "clay", "Feliks Balšaw", [set(6, 4), set(1, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-06-09", "France Lyon", "clay", "Svjatoslav Gulin", [set(7, 5), set(6, 1)], "completed", true, "player"),
+  match("2026-06-03", "ATP Challenger Heilbronn", "clay", "Henri Svitsire", [set(6, 7, 4, 7), set(4, 6)], "completed", false, "opponent"),
+  match("2026-06-01", "ATP Challenger Heilbronn", "clay", "Frederiko Ferreira Silva", [set(6, 2), set(7, 5)], "completed", false, "player"),
+  match("2026-05-22", "Roland-Garros", "clay", "Emilio Nava", [set(3, 6), set(3, 6)], "completed", false, "opponent"),
+  match("2026-05-20", "Roland-Garros", "clay", "Arsur Feri", [set(7, 6, 7, 3), set(4, 6), set(6, 3)], "completed", false, "player"),
+  match("2026-05-19", "Roland-Garros", "clay", "Rei Sakamoto", [set(6, 2), set(7, 5)], "completed", false, "player"),
+  match("2026-05-13", "ATP Challenger Turin", "clay", "Roberto Bautista-Agut", [set(3, 6), set(1, 6)], "completed", false, "opponent"),
+];
+
 const RAW_TENNIS_EVENTS: TennisStoredEvent[] = [
   {
     id: "atp-cincinnati-2026-rublev-borges",
@@ -2529,27 +2691,6 @@ const RAW_TENNIS_EVENTS: TennisStoredEvent[] = [
       "https://scores24.live/es/tennis/l-wta-wta-cincinnati-usa-women-singles",
       "https://scores24.live/es/tennis/t-cirstea-sorana",
       "https://scores24.live/es/tennis/t-pegula-jessica",
-    ],
-    note: "Transcripción exacta de 20 partidos oficiales por jugadora.",
-  },
-  {
-    id: "wta-cincinnati-2026-kostyuk-andreeva",
-    status: "scheduled",
-    input: {
-      id: "wta-cincinnati-2026-kostyuk-andreeva",
-      tournament: "WTA Cincinnati, EEUU Indiv. Fem.",
-      date: "2026-08-19",
-      time: "12:00",
-      round: "1/8",
-      surface: "hard",
-      bestOf: 3,
-      player1: { name: "Marta Kostjuk", matches: KOSTYUK_CINCINNATI_HISTORY },
-      player2: { name: "Mirra Andriva", matches: ANDREEVA_CINCINNATI_HISTORY },
-    },
-    sourceUrls: [
-      "https://scores24.live/es/tennis/l-wta-wta-cincinnati-usa-women-singles",
-      "https://scores24.live/es/tennis/t-kostyuk-marta",
-      "https://scores24.live/es/tennis/t-mirra-andreeva",
     ],
     note: "Transcripción exacta de 20 partidos oficiales por jugadora.",
   },
@@ -3012,6 +3153,69 @@ const RAW_TENNIS_EVENTS: TennisStoredEvent[] = [
       "https://scores24.live/es/tennis/l-atp-challenger-cancun-mexico-men-singles-1",
       "https://scores24.live/es/tennis/t-alan-magadan-4",
       "https://scores24.live/es/tennis/t-hernandez-serrano-juan-alejandro",
+    ],
+    note: "Transcripción exacta de 20 partidos oficiales por jugador.",
+  },
+  {
+    id: "atp-cancun-2026-rocha-hurkacz",
+    status: "scheduled",
+    input: {
+      id: "atp-cancun-2026-rocha-hurkacz",
+      tournament: "Challenger Cancun",
+      date: "2026-08-20",
+      time: "16:00",
+      round: "1/8",
+      surface: "hard",
+      bestOf: 3,
+      player1: { name: "Henrivitse Rotša", matches: ROCHA_CANCUN_HISTORY },
+      player2: { name: "Hubert Hurkacz", matches: HURKACZ_CANCUN_HISTORY },
+    },
+    sourceUrls: [
+      "https://scores24.live/es/tennis/l-atp-challenger-cancun-mexico-men-singles-1",
+      "https://scores24.live/es/tennis/t-rocha-henrique-1",
+      "https://scores24.live/es/tennis/t-hurkacz-hubert",
+    ],
+    note: "Transcripción exacta de 20 partidos oficiales por jugador.",
+  },
+  {
+    id: "atp-cancun-2026-kopriva-onclin",
+    status: "scheduled",
+    input: {
+      id: "atp-cancun-2026-kopriva-onclin",
+      tournament: "Challenger Cancun",
+      date: "2026-08-20",
+      time: "16:00",
+      round: "1/8",
+      surface: "hard",
+      bestOf: 3,
+      player1: { name: "Vit Kopriva", matches: KOPRIVA_CANCUN_HISTORY },
+      player2: { name: "Gausier Onclin", matches: ONCLIN_CANCUN_R8_HISTORY },
+    },
+    sourceUrls: [
+      "https://scores24.live/es/tennis/l-atp-challenger-cancun-mexico-men-singles-1",
+      "https://scores24.live/es/tennis/t-vit-kopriva",
+      "https://scores24.live/es/tennis/t-onclin-gauthier",
+    ],
+    note: "Transcripción exacta de 20 partidos oficiales por jugador.",
+  },
+  {
+    id: "atp-challenger-kingston-2026-prado-martinez",
+    status: "scheduled",
+    input: {
+      id: "atp-challenger-kingston-2026-prado-martinez",
+      tournament: "ATP Challenger Kingston, Jamaica Men Singles",
+      date: "2026-08-20",
+      time: "15:20",
+      round: "Cuartos de final",
+      surface: "hard",
+      bestOf: 3,
+      player1: { name: "Žuan Karlos Prado Angelo", matches: PRADO_ANGELO_KINGSTON_HISTORY },
+      player2: { name: "Pedro Martínez", matches: MARTINEZ_KINGSTON_HISTORY },
+    },
+    sourceUrls: [
+      "https://scores24.live/es/tennis/l-atp-challenger-kingston-jamaica-men-singles",
+      "https://scores24.live/es/tennis/t-prado-angelo-juan-carlos-1",
+      "https://scores24.live/es/tennis/t-martinez-portero-pedro",
     ],
     note: "Transcripción exacta de 20 partidos oficiales por jugador.",
   },

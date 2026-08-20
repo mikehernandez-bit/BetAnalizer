@@ -7,7 +7,8 @@ import { copyToClipboard } from "@/lib/clipboard-formatters";
 import { cn } from "@/lib/utils";
 
 export interface CopyMatchButtonProps {
-  getText: () => string | Promise<string>;
+  getText?: () => string | Promise<string>;
+  text?: string;
   label?: string;
   successLabel?: string;
   variant?: "default" | "outline" | "ghost" | "secondary";
@@ -19,6 +20,7 @@ export interface CopyMatchButtonProps {
 
 export function CopyMatchButton({
   getText,
+  text,
   label = "Copiar info",
   successLabel = "¡Copiado!",
   variant = "outline",
@@ -37,8 +39,8 @@ export function CopyMatchButton({
 
     try {
       setLoading(true);
-      const text = await Promise.resolve(getText());
-      const ok = await copyToClipboard(text);
+      const content = text !== undefined ? text : getText ? await Promise.resolve(getText()) : "";
+      const ok = await copyToClipboard(content);
       if (ok) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);

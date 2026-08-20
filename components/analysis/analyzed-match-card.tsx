@@ -46,7 +46,7 @@ export function AnalyzedMatchCard({ match }: { match: Match }) {
                 <Badge variant="outline" className="shrink-0">Cargado</Badge>
               )}
               <CopyMatchButton
-                getText={() => analysis ? formatFootballAnalysisToClipboard(analysis) : formatFootballMatchToClipboard(match)}
+                text={analysis ? formatFootballAnalysisToClipboard(analysis) : formatFootballMatchToClipboard(match)}
                 size="sm"
                 label="Copiar"
                 title="Copiar información completa y mercados"

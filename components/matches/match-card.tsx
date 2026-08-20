@@ -52,7 +52,7 @@ export function MatchCard({ match }: { match: Match }) {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <CopyMatchButton
-            getText={() => formatFootballMatchToClipboard(match)}
+            text={formatFootballMatchToClipboard(match)}
             label="Copiar"
             size="sm"
             title="Copiar toda la información y mercados de este partido"
@@ -103,7 +103,7 @@ export function MatchCard({ match }: { match: Match }) {
 
       <div className="mt-4 flex gap-2">
         <Button asChild size="sm" className="flex-1 gap-1.5">
-          <Link href={`/analisis/${home.id}-vs-${away.id}-10c`}>Abrir análisis</Link>
+          <Link href={`/analisis/${home.id}-vs-${away.id}-15c`}>Abrir análisis</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
           <Link href={`/partidos/${match.id}`}>Detalle</Link>

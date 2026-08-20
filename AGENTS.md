@@ -21,3 +21,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
    - El número superior pertenece al equipo Local; el número inferior al equipo Visitante.
    - Verificar siempre que los goles del 1T coincidan EXACTAMENTE con la Columna 2 de la captura antes de calcular mercados como "Menos de 2.5 goles 1ª parte".
 
+3. **Muestra y Análisis de 15 Partidos**:
+   - Extraer siempre los **15 últimos partidos oficiales** de cada equipo a partir de las capturas.
+   - El sistema analiza los **15 partidos** completos para patrones, probabilidades, métricas de córners, tarjetas y mercados.
+   - Los enlaces y configuraciones por defecto del análisis usan 15 partidos (`-15c`).
+
+4. **Exclusión de Métricas no Utilizadas (xG y Remates)**:
+   - No tomar en cuenta `xG` ni `Remates` al transcribir capturas de partidos.
+   - Mantener las columnas de `Córners`, `Amarillas` y `Rojas`.
+
+

@@ -1,5 +1,6 @@
 import type { CommonOpponent, CommonOpponentSide, CommonOpponentsAnalysis, H2HMatchRecord, HeadToHead, TeamMatchRecord } from "@/types";
 import { mean } from "@/utils/statistics";
+import { getTeamById } from "@/data/teams";
 
 // ============================================================================
 // Deriva "enfrentamientos directos" y "rivales en común" a partir de los
@@ -21,6 +22,26 @@ import { mean } from "@/utils/statistics";
 
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+export function formatOpponentName(opponentId: string): string {
+  if (!opponentId) return "Rival";
+  const known = getTeamById(opponentId);
+  if (known?.name) return known.name;
+
+  return opponentId
+    .split("-")
+    .map((word) => {
+      const lower = word.toLowerCase();
+      if (["fc", "sc", "cf", "cd", "ud", "ca", "ldu", "fk", "bk", "nk", "if", "aif", "ucl", "uefa", "conmebol", "sp"].includes(lower)) {
+        return lower.toUpperCase();
+      }
+      if (["de", "del", "la", "los", "las", "el", "en", "y", "van", "der"].includes(lower)) {
+        return lower;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
 }
 
 function emptyHeadToHead(teamAId: string, teamBId: string): HeadToHead {
@@ -139,7 +160,16 @@ function toCommonOpponentSide(record: TeamMatchRecord): CommonOpponentSide {
     result: record.result,
     goalsFor: record.goalsFor,
     goalsAgainst: record.goalsAgainst,
+    goalsForFirstHalf: record.goalsForFirstHalf,
+    goalsAgainstFirstHalf: record.goalsAgainstFirstHalf,
+    goalsForSecondHalf: record.goalsForSecondHalf,
+    goalsAgainstSecondHalf: record.goalsAgainstSecondHalf,
     corners: record.cornersFor,
+    cornersAgainst: record.cornersAgainst,
+    yellowCards: record.yellowCards,
+    yellowCardsAgainst: record.yellowCardsAgainst,
+    redCards: record.redCards,
+    redCardsAgainst: record.redCardsAgainst,
     shots: record.shotsFor,
     shotsOnTarget: record.shotsOnTargetFor,
     possession: record.possession,
@@ -189,6 +219,7 @@ export function deriveCommonOpponents(
     };
     return {
       opponentId,
+      opponentName: formatOpponentName(opponentId),
       teamA,
       teamB,
       difference,
@@ -210,3 +241,4 @@ export function deriveCommonOpponents(
     },
   };
 }
+

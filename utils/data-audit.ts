@@ -15,7 +15,7 @@ export interface MatchDataAudit {
  * goles por tiempo, córners y tarjetas. Los remates no forman parte del
  * modelo predictivo actual y no generan alertas de cobertura.
  */
-export function checkMatchDataAudit(homeTeamId: string, awayTeamId: string, sampleSize: number = 10): MatchDataAudit {
+export function checkMatchDataAudit(homeTeamId: string, awayTeamId: string, sampleSize: number = 15): MatchDataAudit {
   const home = getTeamById(homeTeamId);
   const away = getTeamById(awayTeamId);
   const homeRecords = getTeamMatchHistory(homeTeamId, sampleSize);

@@ -32,7 +32,7 @@ export default async function MatchDetailPage(props: PageProps<"/partidos/[id]">
   const importedPackage = getImportedPackage(match.id);
   const homeHistory = getTeamMatchPool(home.id);
   const awayHistory = getTeamMatchPool(away.id);
-  const analysisHref = `/analisis/${home.id}-vs-${away.id}-10c`;
+  const analysisHref = `/analisis/${home.id}-vs-${away.id}-15c`;
   const stats = match.statistics;
   const quick = match.status !== "finished" ? estimateFeaturedStats(home.id, away.id) : null;
 
@@ -48,7 +48,7 @@ export default async function MatchDetailPage(props: PageProps<"/partidos/[id]">
             <div className="flex items-center gap-2">
               <Badge variant="outline">{MATCH_STATUS_LABEL[match.status]}</Badge>
               <CopyMatchButton
-                getText={() => formatFootballMatchToClipboard(match)}
+                text={formatFootballMatchToClipboard(match)}
                 label="Copiar info"
                 size="sm"
                 title="Copiar información completa del encuentro y sus mercados"

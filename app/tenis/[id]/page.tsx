@@ -6,10 +6,6 @@ import { normalizeTennisDayFilter } from "@/lib/tennis-event-groups";
 
 export const dynamic = "force-dynamic";
 
-export function generateStaticParams() {
-  return tennisEvents.map((event) => ({ id: event.id }));
-}
-
 export default async function TennisAnalysisPage({
   params,
   searchParams,

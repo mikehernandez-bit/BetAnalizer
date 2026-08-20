@@ -229,7 +229,16 @@ export interface CommonOpponentSide {
   result: ResultLetter;
   goalsFor: number;
   goalsAgainst: number;
+  goalsForFirstHalf?: number;
+  goalsAgainstFirstHalf?: number;
+  goalsForSecondHalf?: number;
+  goalsAgainstSecondHalf?: number;
   corners?: number;
+  cornersAgainst?: number;
+  yellowCards?: number;
+  yellowCardsAgainst?: number;
+  redCards?: number;
+  redCardsAgainst?: number;
   shots?: number;
   shotsOnTarget?: number;
   possession?: number;
@@ -237,6 +246,7 @@ export interface CommonOpponentSide {
 
 export interface CommonOpponent {
   opponentId: string;
+  opponentName?: string;
   teamA: CommonOpponentSide;
   teamB: CommonOpponentSide;
   difference: {

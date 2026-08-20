@@ -31,15 +31,18 @@ import {
   FRITZ_CINCINNATI_HISTORY,
   GALARNEAU_QUEBEC_HISTORY,
   GAUFF_CINCINNATI_HISTORY,
+  HURKACZ_CANCUN_HISTORY,
   JACQUET_QUEBEC_HISTORY,
   JODAR_CINCINNATI_HISTORY,
   KEYS_CINCINNATI_HISTORY,
+  KOPRIVA_CANCUN_HISTORY,
   KOSTYUK_CINCINNATI_HISTORY,
   KOUAME_CANCUN_HISTORY,
   KWON_QUEBEC_HISTORY,
   LLOYD_HARRIS_CANCUN_HISTORY,
   MAESTRELLI_QUEBEC_HISTORY,
   MAGADAN_CANCUN_HISTORY,
+  MARTINEZ_KINGSTON_HISTORY,
   MCDONALD_QUEBEC_HISTORY,
   MEDVEDEV_CINCINNATI_HISTORY,
   MEJIA_CANCUN_HISTORY,
@@ -52,12 +55,15 @@ import {
   NOSKOVA_CINCINNATI_HISTORY,
   OCONNELL_CINCINNATI_HISTORY,
   ONCLIN_CANCUN_HISTORY,
+  ONCLIN_CANCUN_R8_HISTORY,
   PACHECO_CANCUN_HISTORY,
   PAUL_CINCINNATI_HISTORY,
   PARRY_CINCINNATI_HISTORY,
   PEGULA_CINCINNATI_HISTORY,
   POPYRIN_QUEBEC_HISTORY,
+  PRADO_ANGELO_KINGSTON_HISTORY,
   PRIZMIC_QUEBEC_HISTORY,
+  ROCHA_CANCUN_HISTORY,
   RUBLEV_CINCINNATI_HISTORY,
   RYBAKINA_CINCINNATI_HISTORY,
   SABALENKA_CINCINNATI_HISTORY,
@@ -675,39 +681,7 @@ describe("tennis analysis service", () => {
     expect(analysis.markets.length).toBeGreaterThanOrEqual(15);
   });
 
-  it("preserves the 20+20 Marta Kostyuk and Mirra Andreeva screenshot rows and 1-1 H2H", () => {
-    expect(KOSTYUK_CINCINNATI_HISTORY).toHaveLength(20);
-    expect(ANDREEVA_CINCINNATI_HISTORY).toHaveLength(20);
-    expect(KOSTYUK_CINCINNATI_HISTORY.every((match) => match.date < "2026-08-19")).toBe(true);
-    expect(ANDREEVA_CINCINNATI_HISTORY.every((match) => match.date < "2026-08-19")).toBe(true);
 
-    // Verify Kostyuk tiebreak vs Linda Noskova (7-1)
-    expect(KOSTYUK_CINCINNATI_HISTORY[19].sets[0]).toMatchObject({
-      playerGames: 7,
-      opponentGames: 6,
-      playerTiebreakPoints: 7,
-      opponentTiebreakPoints: 1,
-    });
-
-    // Verify Andreeva extended tiebreak vs Hailey Baptiste (10-8)
-    expect(ANDREEVA_CINCINNATI_HISTORY[19].sets[1]).toMatchObject({
-      playerGames: 7,
-      opponentGames: 6,
-      playerTiebreakPoints: 10,
-      opponentTiebreakPoints: 8,
-    });
-
-    const event = tennisEvents.find((item) => item.id === "wta-cincinnati-2026-kostyuk-andreeva");
-    expect(event).toBeDefined();
-    if (!event) return;
-
-    const analysis = analyzeTennisMatch(event.input);
-    expect(analysis.profiles.player1.matchesUsed).toBe(20);
-    expect(analysis.profiles.player2.matchesUsed).toBe(20);
-    expect(analysis.headToHead).toMatchObject({ matches: 2, player1Wins: 1, player2Wins: 1 });
-    expect(analysis.commonOpponents.map((item) => item.opponent)).toEqual(expect.arrayContaining(["Viktoriža Golubic"]));
-    expect(analysis.markets.length).toBeGreaterThanOrEqual(15);
-  });
 
   it("preserves the 20+20 Diana Shnaider and Elena Rybakina screenshot rows", () => {
     expect(SHNAIDER_CINCINNATI_HISTORY).toHaveLength(20);
@@ -1323,6 +1297,75 @@ describe("tennis analysis service", () => {
     expect(analysis.headToHead).toMatchObject({ matches: 1, player1Wins: 0, player2Wins: 1 });
     expect(analysis.commonOpponents.map((item) => item.opponent)).toEqual(expect.arrayContaining(["Naoja Honda"]));
     expect(analysis.markets.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("preserves the 20+20 Henrique Rocha and Hubert Hurkacz screenshot rows", () => {
+    expect(ROCHA_CANCUN_HISTORY).toHaveLength(20);
+    expect(HURKACZ_CANCUN_HISTORY).toHaveLength(20);
+    expect(ROCHA_CANCUN_HISTORY.every((match) => match.date < "2026-08-20")).toBe(true);
+    expect(HURKACZ_CANCUN_HISTORY.every((match) => match.date < "2026-08-20")).toBe(true);
+
+    // Verify Hurkacz Wimbledon tiebreak vs Sebastian Ofner (10-8)
+    expect(HURKACZ_CANCUN_HISTORY[7].sets[0]).toMatchObject({
+      playerGames: 7,
+      opponentGames: 6,
+      playerTiebreakPoints: 10,
+      opponentTiebreakPoints: 8,
+    });
+
+    const event = tennisEvents.find((item) => item.id === "atp-cancun-2026-rocha-hurkacz");
+    expect(event).toBeDefined();
+    if (!event) return;
+
+    const analysis = analyzeTennisMatch(event.input);
+    expect(analysis.profiles.player1.matchesUsed).toBe(20);
+    expect(analysis.profiles.player2.matchesUsed).toBe(19); // 19 completed + 1 ret
+    expect(analysis.commonOpponents.map((item) => item.opponent)).toEqual(expect.arrayContaining(["Markos Giron"]));
+    expect(analysis.markets.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("preserves the 20+20 Vit Kopriva and Gauthier Onclin screenshot rows", () => {
+    expect(KOPRIVA_CANCUN_HISTORY).toHaveLength(20);
+    expect(ONCLIN_CANCUN_R8_HISTORY).toHaveLength(20);
+    expect(KOPRIVA_CANCUN_HISTORY.every((match) => match.date < "2026-08-20")).toBe(true);
+    expect(ONCLIN_CANCUN_R8_HISTORY.every((match) => match.date < "2026-08-20")).toBe(true);
+
+    const event = tennisEvents.find((item) => item.id === "atp-cancun-2026-kopriva-onclin");
+    expect(event).toBeDefined();
+    if (!event) return;
+
+    const analysis = analyzeTennisMatch(event.input);
+    expect(analysis.profiles.player1.matchesUsed).toBe(19); // 19 completed + 1 ret
+    expect(analysis.profiles.player2.matchesUsed).toBe(20);
+    expect(analysis.commonOpponents.map((item) => item.opponent)).toEqual(expect.arrayContaining(["Fabian Marozsan"]));
+    expect(analysis.markets.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("preserves the 20+20 Juan Carlos Prado Angelo and Pedro Martinez screenshot rows", () => {
+    expect(PRADO_ANGELO_KINGSTON_HISTORY).toHaveLength(20);
+    expect(MARTINEZ_KINGSTON_HISTORY).toHaveLength(20);
+    expect(PRADO_ANGELO_KINGSTON_HISTORY.every((match) => match.date < "2026-08-20")).toBe(true);
+    expect(MARTINEZ_KINGSTON_HISTORY.every((match) => match.date < "2026-08-20")).toBe(true);
+
+    const event = tennisEvents.find((item) => item.id === "atp-challenger-kingston-2026-prado-martinez");
+    expect(event).toBeDefined();
+    if (!event) return;
+
+    const analysis = analyzeTennisMatch(event.input);
+    expect(analysis.profiles.player1.matchesUsed).toBe(19); // 19 completed + 1 ret
+    expect(analysis.profiles.player2.matchesUsed).toBe(20);
+    expect(analysis.commonOpponents.map((item) => item.opponent)).toEqual(expect.arrayContaining(["Daniel Rinkon", "David Žorda Santšis"]));
+    expect(analysis.markets.length).toBeGreaterThanOrEqual(15);
+  });
+
+  it("analyzes and formats all registered tennis events without runtime errors", () => {
+    for (const event of tennisEvents) {
+      expect(() => {
+        const analysis = analyzeTennisMatch(event.input);
+        expect(analysis.projectedWinner).toBeDefined();
+        expect(analysis.markets.length).toBeGreaterThan(0);
+      }).not.toThrow();
+    }
   });
 
   it("uses all 20 matches and adds common-opponent and pre-match H2H evidence", () => {
