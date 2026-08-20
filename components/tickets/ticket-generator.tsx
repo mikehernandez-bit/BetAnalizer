@@ -21,7 +21,6 @@ import { Zap, Flame, Shield, Sliders, Copy, Check, RefreshCw, Trophy, Target, Aw
 import { cn } from "@/lib/utils";
 import { MarketFiveParametersTable } from "@/components/markets/market-five-parameters-table";
 import { getTeamMatchPool } from "@/data/team-history";
-import { createTrackedTicket, saveTrackedTicket } from "@/lib/bet-records";
 
 interface MatchGroup {
   matchId: string;
@@ -128,7 +127,6 @@ export function TicketGenerator() {
   const [copied, setCopied] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [collapsedMap, setCollapsedMap] = React.useState<Record<string, boolean>>({});
-  const [ticketSaved, setTicketSaved] = React.useState(false);
 
   const toggleCollapse = React.useCallback((matchId: string) => {
     setCollapsedMap((prev) => ({
@@ -167,7 +165,6 @@ export function TicketGenerator() {
           maxSelections: Infinity,
         });
         setTicket(generated);
-        setTicketSaved(false);
         setLoading(false);
       }, 150);
     },
@@ -175,8 +172,11 @@ export function TicketGenerator() {
   );
 
   React.useEffect(() => {
-    handleGenerate(minConfidence, minProbability, maxPerMatch, selectedMatchId);
-  }, []);
+    const timer = window.setTimeout(() => {
+      handleGenerate(minConfidence, minProbability, maxPerMatch, selectedMatchId);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [handleGenerate, maxPerMatch, minConfidence, minProbability, selectedMatchId]);
 
   const selectPreset = (type: "80" | "90" | "70" | "custom") => {
     setPreset(type);
@@ -197,24 +197,9 @@ export function TicketGenerator() {
     handleGenerate(c, p, maxPerMatch, selectedMatchId);
   };
 
-
-
   const handleMatchChange = (val: string) => {
     setSelectedMatchId(val);
     handleGenerate(minConfidence, minProbability, maxPerMatch, val);
-  };
-
-  const isTrackableTicket =
-    ticket !== null &&
-    preset !== "custom" &&
-    ticket.minConfidence === Number(preset) &&
-    ticket.minProbability === Number(preset) &&
-    ticket.totalSelections > 0;
-
-  const saveTicketForAudit = () => {
-    if (!ticket || !isTrackableTicket) return;
-    saveTrackedTicket(createTrackedTicket(ticket, Number(preset) as TicketTier));
-    setTicketSaved(true);
   };
 
   // Group selections by match for Bet Builder style view, ordered chronologically (earliest match first)
@@ -519,18 +504,6 @@ export function TicketGenerator() {
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                onClick={saveTicketForAudit}
-                disabled={!isTrackableTicket || ticketSaved}
-                className="text-xs gap-1.5 border-cyan-500/35 bg-cyan-950/30 text-cyan-200 hover:bg-cyan-900/40"
-                title={isTrackableTicket ? "Guardar ticket para auditoría posterior" : "Solo se guardan tickets de 70%, 80% o 90%"}
-              >
-                <BookmarkCheck className="h-3.5 w-3.5" />
-                <span className="ticket-action-label">{ticketSaved ? `Ticket ≥${preset}% guardado` : isTrackableTicket ? `Guardar ticket ≥${preset}%` : "Guardar: elige 70/80/90"}</span>
-                <span className="ticket-action-short-label">Guardar</span>
-              </Button>
-              <Button
-                size="sm"
                 onClick={copyToClipboard}
                 disabled={groupedSelections.length === 0}
                 className="text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-600/20"
@@ -548,7 +521,7 @@ export function TicketGenerator() {
               <Target className="h-10 w-10 text-slate-600 mx-auto" />
               <h3 className="text-base font-bold text-white">No se encontraron selecciones activas con estos filtros</h3>
               <p className="text-xs text-slate-400 max-w-md mx-auto">
-                Prueba seleccionando el botón <strong>Ticket ≥80%</strong> o cambiando al modo <strong>"Bet Builder / Múltiples por partido"</strong>.
+                Prueba seleccionando el botón <strong>Ticket ≥80%</strong> o cambiando al modo <strong>&quot;Bet Builder / Múltiples por partido&quot;</strong>.
               </p>
             </Card>
           ) : (

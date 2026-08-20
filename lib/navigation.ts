@@ -6,6 +6,7 @@ import {
   Settings,
   UploadCloud,
   Ticket,
+  CircleDot,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/ticket", label: "Generador de Tickets", icon: Ticket },
   { href: "/agregar-partido", label: "Agregar partido", icon: UploadCloud },
+  { href: "/tenis", label: "Tenis", icon: CircleDot },
   { href: "/analisis", label: "Encuentros analizados", icon: FileBarChart },
   { href: "/historial", label: "Historial", icon: History },
   { href: "/favoritos", label: "Favoritos", icon: Star },
@@ -28,7 +30,7 @@ export const NAV_ITEMS: NavItem[] = [
 export const MOBILE_NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/ticket", label: "Tickets", icon: Ticket },
-  { href: "/agregar-partido", label: "Agregar", icon: UploadCloud },
+  { href: "/tenis", label: "Tenis", icon: CircleDot },
   { href: "/analisis", label: "Análisis", icon: FileBarChart },
   { href: "/historial", label: "Historial", icon: History },
 ];

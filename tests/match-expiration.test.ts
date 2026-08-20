@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMatchExpired } from "@/data/matches";
+import { hasMatchStarted, isMatchExpired } from "@/data/matches";
 import { Match } from "@/types";
 
 describe("isMatchExpired - Regla de ocultar partidos 2 horas después de su inicio", () => {
@@ -24,6 +24,12 @@ describe("isMatchExpired - Regla de ocultar partidos 2 horas después de su inic
 
   it("NO expira a la 1:00 hora de iniciado el partido (ejemplo: 12:00 PM)", () => {
     const customNow = new Date(2026, 7, 12, 12, 0, 0, 0); // 12:00 PM (1h después de inicio)
+    expect(isMatchExpired(match11am, customNow)).toBe(false);
+  });
+
+  it("marca el saque inicial aunque aún no haya vencido la ventana visual", () => {
+    const customNow = new Date(2026, 7, 12, 12, 0, 0, 0);
+    expect(hasMatchStarted(match11am, customNow)).toBe(true);
     expect(isMatchExpired(match11am, customNow)).toBe(false);
   });
 

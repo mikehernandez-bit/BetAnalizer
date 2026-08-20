@@ -1719,6 +1719,17 @@ export function isMatchExpired(match: Match, customNow?: Date): boolean {
   return nowMs >= expirationMs;
 }
 
+/**
+ * Para auditoría predictiva y tickets, el límite es el saque inicial, no las
+ * dos horas de cortesía visual que usa isMatchExpired para ocultar partidos.
+ */
+export function hasMatchStarted(match: Match, customNow = new Date()): boolean {
+  if (!match?.date || !match?.time) return false;
+  if (match.status === "live" || match.status === "finished") return true;
+  const kickoff = new Date(`${match.date}T${match.time}:00-05:00`);
+  return Number.isFinite(kickoff.getTime()) && customNow.getTime() >= kickoff.getTime();
+}
+
 export function getMatchById(id: string): Match | undefined {
   return matches.find((m) => m.id === id);
 }
@@ -1731,9 +1742,9 @@ export function getMatchesByCompetition(competitionId: string): Match[] {
   return matches.filter((m) => m.competitionId === competitionId);
 }
 
-export function getUpcomingMatches(): Match[] {
+export function getUpcomingMatches(customNow?: Date): Match[] {
   return matches
-    .filter((m) => (m.status === "scheduled" || m.status === "live") && !isMatchExpired(m))
+    .filter((m) => (m.status === "scheduled" || m.status === "live") && !isMatchExpired(m, customNow))
     .sort((a, b) => {
       if (a.status !== b.status) return a.status === "live" ? -1 : 1;
       return a.date + a.time < b.date + b.time ? -1 : 1;

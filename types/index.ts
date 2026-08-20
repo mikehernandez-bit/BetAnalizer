@@ -486,6 +486,33 @@ export interface SavedAnalysis {
 // Registro de predicciones / apuestas
 // ----------------------------------------------------------------------------
 
+/**
+ * Corrección aprendida exclusivamente de pronósticos guardados antes del
+ * inicio y resultados finales posteriores. Los multiplicadores ya incluyen
+ * regularización hacia 1 para que una muestra corta no sobreentrene el 1X2.
+ */
+export interface ResultCalibrationProfile {
+  sampleSize: number;
+  winnerHits: number;
+  winnerAccuracyRate: number;
+  brierScore: number;
+  homeMultiplier: number;
+  drawMultiplier: number;
+  awayMultiplier: number;
+  generatedAt: string;
+}
+
+/** Fiabilidad observada de una selección binaria concreta. */
+export interface MarketReliability {
+  marketId: string;
+  sampleSize: number;
+  hits: number;
+  accuracyRate: number;
+  probabilityMultiplier: number;
+}
+
+export type MarketReliabilityProfile = Record<string, MarketReliability>;
+
 /** Resultado verificable introducido una vez que el encuentro terminó. */
 export interface RecordedMatchOutcome {
   homeGoals: number;

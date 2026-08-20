@@ -2,7 +2,7 @@
 
 **Analiza patrones. Compara estadísticas. Decide con datos.**
 
-Plataforma de análisis estadístico de fútbol: compara equipos, detecta tendencias en sus últimos encuentros y explora mercados deportivos ordenados según su respaldo estadístico. Todos los análisis se presentan como estimaciones orientativas, nunca como resultados garantizados.
+Plataforma de análisis estadístico de fútbol y tenis: compara equipos o jugadores, detecta tendencias recientes y explora mercados deportivos ordenados según su respaldo estadístico. Todos los análisis se presentan como estimaciones orientativas, nunca como resultados garantizados.
 
 ## Stack
 
@@ -88,6 +88,26 @@ lib/                    Contexto de la app, navegación, theming, validación (Z
 Con muestras reales pequeñas (pocos partidos investigados por equipo), la "calidad de los datos" y la confianza del análisis bajan automáticamente — es una señal honesta, no un error.
 
 Ningún mercado se presenta como apuesta segura. Si ningún mercado supera el 60 % de confianza, la pestaña "Mejor Bet" muestra explícitamente que no hay una recomendación suficientemente respaldada.
+
+### Aprendizaje con resultados reales
+
+- El 1X2 pondera más los partidos recientes cuando está activa la opción **Dar más peso a los últimos 5**.
+- `/historial` guarda una foto inmutable del pronóstico antes del saque inicial. Un resultado sin foto previa se muestra, pero no cuenta como acierto ni como entrenamiento.
+- Con cinco pronósticos 1X2 válidos se activa una calibración bayesiana limitada a ±25 % y se informa también el Brier score.
+- Cada mercado se audita por separado. Tras cinco liquidaciones, si no conserva al menos 70 % de aciertos, queda marcado como `evitar` hasta recuperar ese umbral.
+- Todo el aprendizaje se guarda actualmente en `localStorage`; por tanto, pertenece a ese navegador. Para compartir aprendizaje entre dispositivos se necesitará persistencia en un backend.
+
+Estas correcciones reducen sesgos y permiten medir mejoras reales, pero no garantizan una tasa futura de acierto ni eliminan el riesgo propio de los eventos deportivos.
+
+### Análisis de tenis
+
+- `/tenis` recibe exactamente 20 partidos oficiales por jugador mediante el formato `fecha | superficie | torneo opcional | rival | sets | estado opcional`.
+- Los puntos de desempate se conservan con notación explícita, por ejemplo `7(8)-6(6)`.
+- Los retiros (`RET`) y walkovers (`WO`) permanecen identificados pero no alimentan las probabilidades.
+- El motor combina forma general, últimos 10 partidos, rendimiento por sets y resultados en la misma superficie; el ranking ATP/WTA es un ajuste opcional y limitado.
+- Evalúa ganador, ganadores y puntuaciones por set, totales de juegos, hándicaps, cantidad de sets, ambos ganan un set y marcador correcto.
+- Los análisis se pueden guardar en el navegador y los mercados solo se marcan como fuertes con al menos 70 % de probabilidad y 70 % de confianza.
+- El primer evento precargado es Rublev–Borges, Cincinnati 2026; conserva la muestra prepartido y el resultado oficial en campos separados para evitar fuga de datos.
 
 ## Cómo agregar un partido nuevo
 

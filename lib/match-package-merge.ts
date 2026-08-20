@@ -45,26 +45,29 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 /** Fusiona dos listas de historial por fecha (o `matchId` de respaldo, el más nuevo gana) y ordena desc. por fecha. */
 export function mergeHistoryRecords(oldRecords: HistoryRecord[], newRecords: HistoryRecord[]): HistoryRecord[] {
   const byKey = new Map<string, HistoryRecord>();
-  oldRecords.forEach((record) => {
-    const key = record.date || record.matchId;
-    byKey.set(key, record);
-  });
-  newRecords.forEach((record) => {
-    const key = record.date || record.matchId;
-    const existing = byKey.get(key);
-    if (existing) {
-      byKey.set(key, { ...existing, ...record });
-    } else {
+  if (Array.isArray(oldRecords)) {
+    oldRecords.forEach((record) => {
+      const key = record.date || record.matchId;
       byKey.set(key, record);
-    }
-  });
+    });
+  }
+  if (Array.isArray(newRecords)) {
+    newRecords.forEach((record) => {
+      const key = record.date || record.matchId;
+      const existing = byKey.get(key);
+      if (existing) {
+        byKey.set(key, { ...existing, ...record });
+      } else {
+        byKey.set(key, record);
+      }
+    });
+  }
   return [...byKey.values()].sort((a, b) => {
     if (a.date !== b.date) return a.date < b.date ? 1 : -1;
     return a.matchId < b.matchId ? 1 : -1;
   });
 }
 
-/** Fusiona los mapas `{ teamId: HistoryRecord[] }` de dos paquetes (o de todos los paquetes del sistema). */
 export function mergeHistoriesMaps(
   oldMap: Record<string, HistoryRecord[]>,
   newMap: Record<string, HistoryRecord[]>
@@ -72,7 +75,15 @@ export function mergeHistoriesMaps(
   const teamIds = new Set([...Object.keys(oldMap), ...Object.keys(newMap)]);
   const result: Record<string, HistoryRecord[]> = {};
   for (const teamId of teamIds) {
-    result[teamId] = mergeHistoryRecords(oldMap[teamId] ?? [], newMap[teamId] ?? []);
+    const oldRecords = oldMap[teamId] ?? [];
+    const newRecords = newMap[teamId] ?? [];
+    if (newRecords.length >= 10) {
+      result[teamId] = [...newRecords];
+    } else if (oldRecords.length >= 10 && newRecords.length === 0) {
+      result[teamId] = [...oldRecords];
+    } else {
+      result[teamId] = mergeHistoryRecords(oldRecords, newRecords);
+    }
   }
   return result;
 }

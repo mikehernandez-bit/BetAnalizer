@@ -197,6 +197,86 @@ describe("market-service matchup probabilities", () => {
     expect(homeWin!.contradictions).toContain("No hay una ventaja suficiente y consistente para recomendar una victoria simple.");
   });
 
+  it("honors the recent-form option in the 1X2 model", () => {
+    const ctx = context();
+    ctx.homeRecords = Array.from({ length: 10 }, (_, index) => record(`home-${index}`, "local", {
+      result: index < 5 ? "W" : "L",
+      goalsFor: index < 5 ? 3 : 0,
+      goalsAgainst: index < 5 ? 0 : 2,
+    }));
+    ctx.awayRecords = Array.from({ length: 10 }, (_, index) => record(`away-${index}`, "visitante", {
+      result: index < 5 ? "L" : "W",
+      goalsFor: index < 5 ? 0 : 2,
+      goalsAgainst: index < 5 ? 3 : 0,
+    }));
+
+    ctx.weightRecentResults = false;
+    const unweighted = evaluateAllMarkets(ctx, {}).find((market) => market.market.id === "result_home_win")!;
+    ctx.weightRecentResults = true;
+    const weighted = evaluateAllMarkets(ctx, {}).find((market) => market.market.id === "result_home_win")!;
+
+    expect(weighted.statisticalEstimate).toBeGreaterThan(unweighted.statisticalEstimate);
+    expect(weighted.positivePatterns).toContain("Los partidos más recientes reciben mayor peso que los más antiguos.");
+  });
+
+  it("applies learned 1X2 calibration coherently to winner and double chance", () => {
+    const ctx = context();
+    ctx.resultCalibration = {
+      sampleSize: 12,
+      winnerHits: 5,
+      winnerAccuracyRate: 42,
+      brierScore: 0.71,
+      homeMultiplier: 0.85,
+      drawMultiplier: 1.25,
+      awayMultiplier: 1.05,
+      generatedAt: "2026-08-01T00:00:00.000Z",
+    };
+    const markets = evaluateAllMarkets(ctx, {});
+    const home = markets.find((market) => market.market.id === "result_home_win")!;
+    const draw = markets.find((market) => market.market.id === "result_draw")!;
+    const away = markets.find((market) => market.market.id === "result_away_win")!;
+    const homeDouble = markets.find((market) => market.market.id === "result_dc_home")!;
+
+    expect(home.statisticalEstimate + draw.statisticalEstimate + away.statisticalEstimate).toBe(100);
+    expect(homeDouble.statisticalEstimate).toBe(home.statisticalEstimate + draw.statisticalEstimate);
+    expect(draw.probabilitySignals?.at(-1)?.label).toBe("Calibración con resultados cerrados");
+  });
+
+  it("blocks a market that failed to maintain majority accuracy", () => {
+    const ctx = context();
+    ctx.marketReliability = {
+      goals_over_05: {
+        marketId: "goals_over_05",
+        sampleSize: 10,
+        hits: 4,
+        accuracyRate: 40,
+        probabilityMultiplier: 0.8,
+      },
+    };
+
+    const market = evaluateAllMarkets(ctx, {}).find((item) => item.market.id === "goals_over_05")!;
+    expect(market.recommendation).toBe("evitar");
+    expect(market.confidence).toBeLessThanOrEqual(55);
+    expect(market.contradictions.at(-1)).toContain("No se recomienda hasta recuperar al menos 70% de aciertos auditados");
+  });
+
+  it("also blocks a market that has a majority but remains below the 70% target", () => {
+    const ctx = context();
+    ctx.marketReliability = {
+      goals_over_05: {
+        marketId: "goals_over_05",
+        sampleSize: 10,
+        hits: 6,
+        accuracyRate: 60,
+        probabilityMultiplier: 0.9,
+      },
+    };
+
+    const market = evaluateAllMarkets(ctx, {}).find((item) => item.market.id === "goals_over_05")!;
+    expect(market.recommendation).toBe("evitar");
+    expect(market.confidence).toBeLessThanOrEqual(55);
+  });
+
   it("calculates goal and corner handicaps from team coverage and rival allowance", () => {
     const markets = evaluateAllMarkets(context(), {});
     const goalsHandicap = markets.find((evaluation) => evaluation.market.id === "goals_handicap_home_minus_15");

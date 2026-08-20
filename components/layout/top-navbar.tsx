@@ -25,6 +25,7 @@ const PAGE_TITLES: { match: RegExp; title: string; subtitle?: string }[] = [
   { match: /^\/$/, title: "Inicio", subtitle: "Resumen general y partidos destacados" },
   { match: /^\/dashboard/, title: "Inicio", subtitle: "Resumen general y partidos destacados" },
   { match: /^\/analizar/, title: "Analizar partido", subtitle: "Genera un análisis estadístico completo" },
+  { match: /^\/tenis/, title: "Tenis", subtitle: "Análisis por jugador, superficie, sets y juegos" },
   { match: /^\/partidos\/.+/, title: "Detalle del partido" },
   { match: /^\/partidos/, title: "Partidos", subtitle: "Explora los próximos y últimos encuentros" },
   { match: /^\/equipos\/.+/, title: "Perfil del equipo" },

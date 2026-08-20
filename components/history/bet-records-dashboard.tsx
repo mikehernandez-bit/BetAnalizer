@@ -2,46 +2,118 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, ClipboardList, FileCheck2, Percent, PlusCircle, Trophy, XCircle } from "lucide-react";
-import { AnalysisStatus, RecordedMatchOutcome, TrackedTicket, TrackedTicketMatch } from "@/types";
-import { readTrackedTickets, updateTrackedTicketMatchOutcome } from "@/lib/bet-records";
-import { getTeamById } from "@/data/teams";
-import { formatDateLong } from "@/utils/formatters";
+import {
+  Award,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Database,
+  FileCheck2,
+  Layers,
+  Percent,
+  RefreshCw,
+  Target,
+  Trash2,
+  Trophy,
+  XCircle,
+  Zap,
+} from "lucide-react";
+import {
+  ThreeDayAuditedMatch,
+  ThreeDayAuditSummary,
+  scanThreeDayAuditMatches,
+  saveRecordedOutcome,
+  deleteRecordedOutcome,
+} from "@/lib/bet-records";
+import { RecordedMatchOutcome } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatCard } from "@/components/shared/stat-card";
 import { cn } from "@/lib/utils";
 
-const STATUS_STYLE: Record<AnalysisStatus, { label: string; className: string }> = {
-  ganada: { label: "Acertado", className: "border-brand-green/25 bg-brand-green/10 text-brand-green-bright" },
-  perdida: { label: "Fallido", className: "border-brand-red/25 bg-brand-red/10 text-brand-red" },
-  pendiente: { label: "Pendiente", className: "border-brand-blue/25 bg-brand-blue/10 text-brand-blue" },
-  anulada: { label: "Anulado", className: "border-border bg-muted text-muted-foreground" },
-};
+type DayFilter = "all" | "yesterday" | "today" | "tomorrow";
 
 const SELECTION_STATUS = {
-  acertada: { label: "Acertó", className: "text-brand-green-bright" },
-  fallida: { label: "Falló", className: "text-brand-red" },
-  pendiente: { label: "Pendiente", className: "text-brand-blue" },
-  sin_datos: { label: "Falta dato", className: "text-amber-500" },
+  acertada: {
+    label: "Acertó",
+    badgeClass: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-bold",
+    textClass: "text-emerald-400 font-semibold",
+    icon: CheckCircle2,
+  },
+  fallida: {
+    label: "Falló",
+    badgeClass: "border-red-500/30 bg-red-500/10 text-red-400 font-bold",
+    textClass: "text-red-400 font-semibold",
+    icon: XCircle,
+  },
+  pendiente: {
+    label: "Pendiente",
+    badgeClass: "border-blue-500/30 bg-blue-500/10 text-blue-400 font-medium",
+    textClass: "text-blue-400 font-medium",
+    icon: Clock,
+  },
+  sin_datos: {
+    label: "Falta dato",
+    badgeClass: "border-amber-500/30 bg-amber-500/10 text-amber-400 font-medium",
+    textClass: "text-amber-400 font-medium",
+    icon: Clock,
+  },
 } as const;
 
-type OutcomeForm = Record<"homeGoals" | "awayGoals" | "homeGoalsFirstHalf" | "awayGoalsFirstHalf" | "homeCorners" | "awayCorners" | "homeYellowCards" | "awayYellowCards" | "homeRedCards" | "awayRedCards", string>;
-const EMPTY_OUTCOME: OutcomeForm = { homeGoals: "", awayGoals: "", homeGoalsFirstHalf: "", awayGoalsFirstHalf: "", homeCorners: "", awayCorners: "", homeYellowCards: "", awayYellowCards: "", homeRedCards: "", awayRedCards: "" };
+type OutcomeForm = Record<
+  | "homeGoals"
+  | "awayGoals"
+  | "homeGoalsFirstHalf"
+  | "awayGoalsFirstHalf"
+  | "homeCorners"
+  | "awayCorners"
+  | "homeYellowCards"
+  | "awayYellowCards"
+  | "homeRedCards"
+  | "awayRedCards",
+  string
+>;
+
+const EMPTY_OUTCOME: OutcomeForm = {
+  homeGoals: "",
+  awayGoals: "",
+  homeGoalsFirstHalf: "",
+  awayGoalsFirstHalf: "",
+  homeCorners: "",
+  awayCorners: "",
+  homeYellowCards: "",
+  awayYellowCards: "",
+  homeRedCards: "",
+  awayRedCards: "",
+};
 
 function outcomeToForm(outcome?: RecordedMatchOutcome): OutcomeForm {
-  const number = (value: number | undefined) => value === undefined ? "" : String(value);
-  return outcome ? {
-    homeGoals: number(outcome.homeGoals), awayGoals: number(outcome.awayGoals),
-    homeGoalsFirstHalf: number(outcome.homeGoalsFirstHalf), awayGoalsFirstHalf: number(outcome.awayGoalsFirstHalf),
-    homeCorners: number(outcome.homeCorners), awayCorners: number(outcome.awayCorners),
-    homeYellowCards: number(outcome.homeYellowCards), awayYellowCards: number(outcome.awayYellowCards),
-    homeRedCards: number(outcome.homeRedCards), awayRedCards: number(outcome.awayRedCards),
-  } : EMPTY_OUTCOME;
+  const num = (value: number | undefined) => (value === undefined ? "" : String(value));
+  return outcome
+    ? {
+        homeGoals: num(outcome.homeGoals),
+        awayGoals: num(outcome.awayGoals),
+        homeGoalsFirstHalf: num(outcome.homeGoalsFirstHalf),
+        awayGoalsFirstHalf: num(outcome.awayGoalsFirstHalf),
+        homeCorners: num(outcome.homeCorners),
+        awayCorners: num(outcome.awayCorners),
+        homeYellowCards: num(outcome.homeYellowCards),
+        awayYellowCards: num(outcome.awayYellowCards),
+        homeRedCards: num(outcome.homeRedCards),
+        awayRedCards: num(outcome.awayRedCards),
+      }
+    : EMPTY_OUTCOME;
 }
 
 function toNumber(value: string): number | undefined {
@@ -50,108 +122,421 @@ function toNumber(value: string): number | undefined {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
-function allSelections(tickets: TrackedTicket[]) {
-  return tickets.flatMap((ticket) => ticket.matches.flatMap((match) => match.selections));
-}
-
-function allMatches(tickets: TrackedTicket[]) {
-  return tickets.flatMap((ticket) => ticket.matches);
-}
-
 export function BetRecordsDashboard() {
-  const [tickets, setTickets] = React.useState<TrackedTicket[]>([]);
+  const [summary, setSummary] = React.useState<ThreeDayAuditSummary | null>(null);
   const [mounted, setMounted] = React.useState(false);
-  const [active, setActive] = React.useState<{ ticketId: string; matchId: string } | null>(null);
+  const [dayFilter, setDayFilter] = React.useState<DayFilter>("today");
+  const [activeMatch, setActiveMatch] = React.useState<ThreeDayAuditedMatch | null>(null);
   const [form, setForm] = React.useState<OutcomeForm>(EMPTY_OUTCOME);
   const [formError, setFormError] = React.useState("");
 
-  React.useEffect(() => {
-    const loadId = window.setTimeout(() => {
-      setTickets(readTrackedTickets());
-      setMounted(true);
-    }, 0);
-    return () => window.clearTimeout(loadId);
+  const refreshAudit = React.useCallback(() => {
+    const fresh = scanThreeDayAuditMatches();
+    setSummary(fresh);
   }, []);
 
-  const activeTicket = tickets.find((ticket) => ticket.id === active?.ticketId);
-  const activeMatch = activeTicket?.matches.find((match) => match.matchId === active?.matchId);
-  const selections = allSelections(tickets);
-  const hits = selections.filter((selection) => selection.status === "acertada").length;
-  const failures = selections.filter((selection) => selection.status === "fallida").length;
-  const auditedSelections = hits + failures;
-  const winnerAudits = allMatches(tickets).flatMap((match) => match.winnerPrediction?.correct === undefined ? [] : [match.winnerPrediction.correct]);
-  const winnerHits = winnerAudits.filter(Boolean).length;
+  React.useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      refreshAudit();
+      setMounted(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [refreshAudit]);
 
-  const openSettlement = (ticket: TrackedTicket, match: TrackedTicketMatch) => {
-    setActive({ ticketId: ticket.id, matchId: match.matchId });
+  const openSettlement = (match: ThreeDayAuditedMatch) => {
+    setActiveMatch(match);
     setForm(outcomeToForm(match.outcome));
     setFormError("");
   };
 
-  const saveOutcome = () => {
-    if (!active) return;
+  const handleSaveOutcome = () => {
+    if (!activeMatch) return;
     const homeGoals = toNumber(form.homeGoals);
     const awayGoals = toNumber(form.awayGoals);
     if (homeGoals === undefined || awayGoals === undefined) {
-      setFormError("El marcador final de ambos equipos es obligatorio.");
+      setFormError("El marcador final de ambos equipos (FT) es obligatorio.");
       return;
     }
+
+    const has1T = form.homeGoalsFirstHalf.trim() !== "" || form.awayGoalsFirstHalf.trim() !== "";
+    const hasCorners = form.homeCorners.trim() !== "" || form.awayCorners.trim() !== "";
+    const hasYellows = form.homeYellowCards.trim() !== "" || form.awayYellowCards.trim() !== "";
+    const hasReds = form.homeRedCards.trim() !== "" || form.awayRedCards.trim() !== "";
+
     const outcome: RecordedMatchOutcome = {
-      homeGoals, awayGoals,
-      homeGoalsFirstHalf: toNumber(form.homeGoalsFirstHalf), awayGoalsFirstHalf: toNumber(form.awayGoalsFirstHalf),
-      homeCorners: toNumber(form.homeCorners), awayCorners: toNumber(form.awayCorners),
-      homeYellowCards: toNumber(form.homeYellowCards), awayYellowCards: toNumber(form.awayYellowCards),
-      homeRedCards: toNumber(form.homeRedCards), awayRedCards: toNumber(form.awayRedCards),
+      homeGoals,
+      awayGoals,
+      homeGoalsFirstHalf: has1T ? (toNumber(form.homeGoalsFirstHalf) ?? 0) : undefined,
+      awayGoalsFirstHalf: has1T ? (toNumber(form.awayGoalsFirstHalf) ?? 0) : undefined,
+      homeCorners: hasCorners ? (toNumber(form.homeCorners) ?? 0) : undefined,
+      awayCorners: hasCorners ? (toNumber(form.awayCorners) ?? 0) : undefined,
+      homeYellowCards: hasYellows ? (toNumber(form.homeYellowCards) ?? 0) : undefined,
+      awayYellowCards: hasYellows ? (toNumber(form.awayYellowCards) ?? 0) : undefined,
+      homeRedCards: hasReds ? (toNumber(form.homeRedCards) ?? 0) : undefined,
+      awayRedCards: hasReds ? (toNumber(form.awayRedCards) ?? 0) : undefined,
       recordedAt: new Date().toISOString(),
     };
-    const updated = updateTrackedTicketMatchOutcome(active.ticketId, active.matchId, outcome);
-    if (!updated) return;
-    setTickets((current) => current.map((ticket) => ticket.id === updated.id ? updated : ticket));
-    setActive(null);
+
+    saveRecordedOutcome(activeMatch.matchId, outcome);
+    refreshAudit();
+    setActiveMatch(null);
   };
 
-  if (!mounted) return <div className="min-h-48" aria-busy="true" />;
+  const handleResetOutcome = (matchId: string) => {
+    deleteRecordedOutcome(matchId);
+    refreshAudit();
+  };
+
+  if (!mounted || !summary) {
+    return <div className="min-h-64 flex items-center justify-center text-muted-foreground text-sm">Cargando auditoría automática...</div>;
+  }
+
+  const filteredMatches = summary.matches.filter((m) => {
+    if (dayFilter === "all") return true;
+    return m.dayRelative === dayFilter;
+  });
+
+  const allFilteredBets = filteredMatches.flatMap((m) => m.qualifyingBets);
+  const tabHits = allFilteredBets.filter((b) => b.status === "acertada").length;
+  const tabFailures = allFilteredBets.filter((b) => b.status === "fallida").length;
+  const tabAudited = tabHits + tabFailures;
+  const tabAccuracy = tabAudited > 0 ? Math.round((tabHits / tabAudited) * 100) : null;
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-brand-green/20 bg-[linear-gradient(120deg,color-mix(in_oklch,var(--brand-green)_12%,transparent),transparent_60%)] p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-green-bright">Auditoría de tickets</p>
-            <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground">Tickets blindados 70 / 80 / 90</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Aquí solo se guardan tickets generados con ambos filtros en 70%, 80% o 90%. Registra el resultado de cada encuentro y compara mercados y ganador previsto.</p>
+      {/* Header Banner */}
+      <section className="rounded-2xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950/30 via-slate-900/60 to-slate-950 p-5 sm:p-6 shadow-xl backdrop-blur">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[11px] font-bold uppercase tracking-wider">
+                Auditoría Automática Continua
+              </Badge>
+              <span className="text-xs text-slate-400">Ventana: Ayer · Hoy · Mañana</span>
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-white">Historial y aprendizaje del modelo</h1>
+            <p className="max-w-3xl text-xs sm:text-sm text-slate-300">
+              Guarda el pronóstico antes del inicio y lo compara con el resultado real. Solo esas fotos prepartido alimentan la precisión y la calibración; un resultado cargado sin foto previa nunca se convierte retroactivamente en un acierto.
+            </p>
           </div>
-          <Button asChild variant="outline"><Link href="/ticket"><PlusCircle /> Generar ticket</Link></Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={refreshAudit} className="text-xs gap-1.5 border-slate-700 bg-slate-800 text-white hover:bg-slate-700">
+              <RefreshCw className="h-3.5 w-3.5 text-emerald-400" /> Re-escanear
+            </Button>
+            <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-1.5">
+              <Link href="/ticket">
+                <Zap className="h-3.5 w-3.5" /> Ir al Generador
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
-      <div className="adaptive-stat-grid grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard icon={ClipboardList} label="Tickets guardados" value={String(tickets.length)} />
-        <StatCard icon={CheckCircle2} label="Mercados acertados" value={String(hits)} accent="green" />
-        <StatCard icon={XCircle} label="Mercados fallidos" value={String(failures)} accent="red" />
-        <StatCard icon={Percent} label="Precisión mercados" value={auditedSelections ? `${Math.round((hits / auditedSelections) * 100)}%` : "—"} accent="yellow" />
+      {/* Metric Cards */}
+      <div className="adaptive-stat-grid grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
+        <StatCard icon={Layers} label="Partidos en Ventana" value={String(filteredMatches.length)} />
+        <StatCard icon={Target} label="Bets $\ge 70\%$ Calificadas" value={String(allFilteredBets.length)} />
+        <StatCard icon={CheckCircle2} label="Bets Acertadas" value={String(tabHits)} accent="green" />
+        <StatCard icon={XCircle} label="Bets Fallidas" value={String(tabFailures)} accent="red" />
+        <StatCard
+          icon={Percent}
+          label="Tasa Acierto Modelo"
+          value={tabAccuracy !== null ? `${tabAccuracy}%` : "Por jugar"}
+          accent={tabAccuracy !== null ? (tabAccuracy >= 75 ? "green" : "yellow") : undefined}
+        />
+        <StatCard
+          icon={Trophy}
+          label="Acierto ganador 1X2"
+          value={summary.stats.winnerAccuracyRate !== null ? `${summary.stats.winnerAccuracyRate}%` : "Sin muestra"}
+          accent={summary.stats.winnerAccuracyRate !== null && summary.stats.winnerAccuracyRate >= 50 ? "green" : "yellow"}
+        />
+        <StatCard
+          icon={Database}
+          label="Muestra de aprendizaje"
+          value={String(summary.stats.calibrationSampleSize)}
+          accent={summary.stats.calibrationSampleSize >= 5 ? "green" : "yellow"}
+        />
       </div>
 
-      {winnerAudits.length > 0 && <p className="text-xs text-muted-foreground">Ganador previsto: <span className="font-semibold text-foreground">{winnerHits}/{winnerAudits.length}</span> aciertos ({Math.round((winnerHits / winnerAudits.length) * 100)}%).</p>}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <StatCard icon={Layers} label="Partidos históricos auditados" value={String(summary.stats.lifetimeMatches)} />
+        <StatCard icon={Target} label="Bets históricas ≥70%" value={String(summary.stats.lifetimeAuditedBets)} />
+        <StatCard icon={CheckCircle2} label="Aciertos históricos" value={String(summary.stats.lifetimeHits)} accent="green" />
+        <StatCard icon={XCircle} label="Fallos históricos" value={String(summary.stats.lifetimeFailures)} accent="red" />
+        <StatCard
+          icon={Percent}
+          label="Precisión histórica ≥70%"
+          value={summary.stats.lifetimeAccuracyRate !== null ? `${summary.stats.lifetimeAccuracyRate}%` : "Sin muestra"}
+          accent={summary.stats.lifetimeAccuracyRate !== null && summary.stats.lifetimeAccuracyRate >= 70 ? "green" : "yellow"}
+        />
+      </div>
 
-      {tickets.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="Aún no hay tickets auditables" description="Genera un Ticket ≥70%, ≥80% o ≥90% y usa “Guardar ticket” para congelar sus mercados y pronóstico de ganador." />
+      <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 px-4 py-3 text-xs text-slate-300">
+        <strong className="text-cyan-300">Calibración:</strong>{" "}
+        {summary.stats.calibrationSampleSize >= 5
+          ? `${summary.stats.calibrationSampleSize} pronósticos válidos · Brier ${summary.stats.calibrationBrierScore?.toFixed(3)}. La corrección aprendida ya se aplica a predicciones nuevas.`
+          : `${summary.stats.calibrationSampleSize}/5 pronósticos válidos. El modelo base sigue activo hasta reunir una muestra mínima segura.`}
+        {summary.stats.reliableMarkets > 0 && (
+          <span className="ml-1 text-cyan-200">
+            {summary.stats.reliableMarkets} mercado(s) ya cuentan con control de fiabilidad; los que bajan de 70% quedan bloqueados.
+          </span>
+        )}
+        {summary.stats.missingPreMatchPredictions > 0 && (
+          <span className="ml-1 text-amber-300">
+            {summary.stats.missingPreMatchPredictions} resultado(s) no entran en la precisión por faltar una foto prepartido.
+          </span>
+        )}
+      </div>
+
+      {/* Day Filter Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant={dayFilter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDayFilter("all")}
+            className={cn("text-xs font-bold", dayFilter === "all" ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "border-slate-800 bg-slate-900/60 text-slate-300")}
+          >
+            Todos ({summary.matches.length} partidos)
+          </Button>
+          <Button
+            variant={dayFilter === "yesterday" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDayFilter("yesterday")}
+            className={cn("text-xs font-bold", dayFilter === "yesterday" ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "border-slate-800 bg-slate-900/60 text-slate-300")}
+          >
+            Ayer ({summary.dates.yesterday})
+          </Button>
+          <Button
+            variant={dayFilter === "today" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDayFilter("today")}
+            className={cn("text-xs font-bold", dayFilter === "today" ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "border-slate-800 bg-slate-900/60 text-slate-300")}
+          >
+            Hoy ({summary.dates.today})
+          </Button>
+          <Button
+            variant={dayFilter === "tomorrow" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDayFilter("tomorrow")}
+            className={cn("text-xs font-bold", dayFilter === "tomorrow" ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "border-slate-800 bg-slate-900/60 text-slate-300")}
+          >
+            Mañana ({summary.dates.tomorrow})
+          </Button>
+        </div>
+
+        <div className="text-xs text-slate-400 flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-emerald-400" />
+          <span>Mostrando <strong>{filteredMatches.length}</strong> partidos con <strong>{allFilteredBets.length}</strong> apuestas calificadas</span>
+        </div>
+      </div>
+
+      {/* Matches List */}
+      {filteredMatches.length === 0 ? (
+        <EmptyState
+          icon={Layers}
+          title="No hay partidos con bets $\ge 70\%$ en este filtro"
+          description="Los partidos de este día no superaron el umbral estricto del 70% en Probabilidad y Confianza en el catálogo de mercados."
+        />
       ) : (
-        <div className="space-y-5">
-          {tickets.map((ticket) => {
-            const ticketStatus = STATUS_STYLE[ticket.status];
-            const selectionTotal = ticket.matches.reduce((total, match) => total + match.selections.length, 0);
+        <div className="space-y-6">
+          {filteredMatches.map((match, matchIdx) => {
+            const hasOutcome = Boolean(match.outcome);
+            const winner = match.winnerPrediction;
+
             return (
-              <Card key={ticket.id} className="overflow-hidden">
-                <CardHeader className="gap-3 border-b border-border/70 bg-muted/20 pb-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-base"><Trophy className="size-4 text-brand-green-bright" /> Ticket blindado ≥{ticket.tier}%</CardTitle>
-                    <p className="mt-1 text-xs text-muted-foreground">{ticket.matches.length} encuentros · {selectionTotal} mercados · Filtros: ≥{ticket.minConfidence}% confianza y ≥{ticket.minProbability}% probabilidad · Modelo {ticket.modelVersion}</p>
+              <Card
+                key={match.matchId}
+                className="overflow-hidden border-slate-800 bg-slate-900/90 shadow-xl backdrop-blur transition-all hover:border-emerald-500/40"
+              >
+                {/* Match Header */}
+                <CardHeader className="gap-3 border-b border-slate-800/80 bg-slate-950/60 pb-3 pt-3.5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs">
+                      {matchIdx + 1}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+                          {match.competition}
+                        </span>
+                        <span className="text-slate-600">·</span>
+                        <span className="text-[11px] font-mono text-slate-400">
+                          {match.date} · {match.time}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px] uppercase font-bold",
+                            match.dayRelative === "yesterday"
+                              ? "border-purple-500/30 bg-purple-500/10 text-purple-300"
+                              : match.dayRelative === "today"
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                              : "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
+                          )}
+                        >
+                          {match.dayRelative === "yesterday" ? "Ayer" : match.dayRelative === "today" ? "Hoy" : "Mañana"}
+                        </Badge>
+                      </div>
+                      <CardTitle className="mt-0.5 text-base font-extrabold text-white flex items-center gap-2">
+                        {match.homeTeam.name} <span className="text-slate-500 font-normal text-xs">vs</span> {match.awayTeam.name}
+                      </CardTitle>
+                    </div>
                   </div>
-                  <Badge variant="outline" className={cn("text-[10px]", ticketStatus.className)}>{ticketStatus.label}</Badge>
+
+                  <div className="flex items-center gap-2 sm:justify-end">
+                    {hasOutcome ? (
+                      <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs">
+                        <span className="font-mono font-black text-emerald-300 text-sm">
+                          {match.outcome?.homeGoals} - {match.outcome?.awayGoals}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 uppercase font-bold">(Final)</span>
+                      </div>
+                    ) : (
+                      <Badge variant="outline" className="border-slate-700 bg-slate-800/60 text-slate-300 text-xs">
+                        Por disputar
+                      </Badge>
+                    )}
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-3 pt-4">
-                  {ticket.matches.map((match) => <TicketMatchAudit key={match.matchId} ticket={ticket} match={match} onSettle={openSettlement} />)}
+
+                <CardContent className="space-y-4 p-4">
+                  {/* Model 1X2 Prediction Bar */}
+                  {winner && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cyan-500/25 bg-cyan-950/20 px-3 py-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-cyan-400" />
+                        <span className="font-extrabold text-cyan-200">
+                          Pronóstico 1X2 Modelo: {winner.label} ({winner.probability}%)
+                        </span>
+                        <Badge variant="outline" className="border-cyan-500/30 text-[9px] text-cyan-300">
+                          {match.predictionStatus === "locked"
+                            ? "Foto prepartido"
+                            : match.predictionStatus === "reconstructed"
+                              ? "Pronóstico reconstruido"
+                              : "Proyección actual"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 font-mono text-[11px] text-slate-300">
+                        <span>1: {winner.homeWinProbability}%</span>
+                        <span className="text-slate-600">·</span>
+                        <span>X: {winner.drawProbability}%</span>
+                        <span className="text-slate-600">·</span>
+                        <span>2: {winner.awayWinProbability}%</span>
+                        {winner.correct !== undefined && (
+                          <Badge
+                            className={cn(
+                              "ml-2 text-[10px] font-bold",
+                              winner.correct
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                : "bg-red-500/20 text-red-300 border-red-500/40"
+                            )}
+                          >
+                            {winner.correct ? "Acertó 1X2" : "Falló 1X2"}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {match.predictionStatus === "reconstructed" && (
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                      Resultado manual liquidado con una predicción reconstruida desde el historial del modelo. Los mercados acertados se muestran en verde y los fallidos en rojo.
+                    </div>
+                  )}
+
+                  {match.predictionStatus === "missing" && (
+                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                      Este resultado no tenía una predicción guardada antes del inicio. Se muestra como antecedente, pero queda excluido de aciertos, fallos y aprendizaje.
+                    </div>
+                  )}
+
+                  {/* Qualifying Bets Grid */}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
+                      <p className="font-bold text-slate-300 flex items-center gap-1.5">
+                        <Award className="h-3.5 w-3.5 text-amber-400" /> Bets Calificadas ($\ge 70\%$ Confianza y Probabilidad):
+                      </p>
+                      <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                        Ordenadas por mayor probabilidad (↓)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      {match.qualifyingBets.map((bet) => {
+                        const statusConfig = SELECTION_STATUS[bet.status];
+                        const Icon = statusConfig.icon;
+
+                        return (
+                          <div
+                            key={bet.id}
+                            className={cn(
+                              "rounded-xl border p-3 transition-all",
+                              bet.status === "acertada"
+                                ? "border-emerald-500/40 bg-emerald-950/15"
+                                : bet.status === "fallida"
+                                ? "border-red-500/40 bg-red-950/15"
+                                : "border-slate-800 bg-slate-950/50"
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-xs font-extrabold text-white leading-snug">
+                                {bet.marketName}
+                              </span>
+                              <Badge className={cn("text-[10px] shrink-0", statusConfig.badgeClass)}>
+                                <Icon className="h-3 w-3 mr-1" /> {statusConfig.label}
+                              </Badge>
+                            </div>
+
+                            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 font-mono">
+                              <span>
+                                Prob: <strong className="text-amber-400">{bet.probability}%</strong>
+                              </span>
+                              <span>
+                                Conf: <strong className="text-cyan-400">{bet.confidence}%</strong>
+                              </span>
+                            </div>
+
+                            {bet.settlementNote && (
+                              <p className="mt-1.5 text-[10px] text-emerald-300/90 font-mono bg-slate-950/60 rounded px-1.5 py-0.5">
+                                Resultado: {bet.settlementNote}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Match Footer Actions */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80 pt-3 text-xs">
+                    <span className="text-slate-400">
+                      {hasOutcome
+                        ? `Marcador registrado (${match.hits} acertadas, ${match.failures} fallidas de ${match.totalBets})`
+                        : `Pendiente de disputa (${match.totalBets} apuestas $\ge 70\%$ listas para auditar)`}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {hasOutcome && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleResetOutcome(match.matchId)}
+                          className="text-xs text-red-400 hover:text-red-300 hover:bg-red-950/30 gap-1"
+                          title="Restablecer a pendiente"
+                        >
+                          <Trash2 className="h-3 w-3" /> Restablecer
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openSettlement(match)}
+                        className="text-xs gap-1.5 border-slate-700 bg-slate-800 hover:bg-slate-700 text-white font-semibold"
+                      >
+                        <FileCheck2 className="h-3.5 w-3.5 text-emerald-400" />
+                        {hasOutcome ? "Editar Resultado" : "Registrar Resultado"}
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -159,57 +544,123 @@ export function BetRecordsDashboard() {
         </div>
       )}
 
-      <Dialog open={Boolean(activeMatch)} onOpenChange={(open) => !open && setActive(null)}>
-        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
+      {/* Outcome Recording Dialog */}
+      <Dialog open={Boolean(activeMatch)} onOpenChange={(open) => !open && setActiveMatch(null)}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl border-slate-800 bg-slate-950 text-white">
           <DialogHeader>
-            <DialogTitle>Registrar resultado oficial</DialogTitle>
-            <DialogDescription>Se audita este encuentro dentro de su ticket. Si una métrica no está disponible, el mercado queda como “Falta dato”, nunca como fallido.</DialogDescription>
+            <DialogTitle className="text-base font-extrabold text-white flex items-center gap-2">
+              <FileCheck2 className="h-5 w-5 text-emerald-400" /> Registrar Resultado Oficial
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-400">
+              Ingresa el marcador oficial para {activeMatch?.homeTeam.name} vs {activeMatch?.awayTeam.name}. Se auditarán automáticamente todas las apuestas $\ge 70\%$ del encuentro.
+            </DialogDescription>
           </DialogHeader>
-          <OutcomeFields title="Resultado final" required fields={[["homeGoals", "Goles local"], ["awayGoals", "Goles visitante"]]} form={form} setForm={setForm} />
-          <OutcomeFields title="Primer tiempo" fields={[["homeGoalsFirstHalf", "Goles local 1T"], ["awayGoalsFirstHalf", "Goles visitante 1T"]]} form={form} setForm={setForm} />
-          <OutcomeFields title="Córners" fields={[["homeCorners", "Córners local"], ["awayCorners", "Córners visitante"]]} form={form} setForm={setForm} />
-          <OutcomeFields title="Tarjetas amarillas" fields={[["homeYellowCards", "Amarillas local"], ["awayYellowCards", "Amarillas visitante"]]} form={form} setForm={setForm} />
-          <OutcomeFields title="Tarjetas rojas" fields={[["homeRedCards", "Rojas local"], ["awayRedCards", "Rojas visitante"]]} form={form} setForm={setForm} />
-          {formError && <p className="text-xs font-medium text-destructive">{formError}</p>}
-          <DialogFooter><Button variant="outline" onClick={() => setActive(null)}>Cancelar</Button><Button onClick={saveOutcome}><FileCheck2 /> Auditar encuentro</Button></DialogFooter>
+
+          <div className="space-y-4 py-2">
+            <OutcomeFields
+              title="Resultado Final (FT)"
+              required
+              fields={[
+                ["homeGoals", `Goles ${activeMatch?.homeTeam.shortName ?? "Local"}`],
+                ["awayGoals", `Goles ${activeMatch?.awayTeam.shortName ?? "Visitante"}`],
+              ]}
+              form={form}
+              setForm={setForm}
+            />
+
+            <OutcomeFields
+              title="Primer Tiempo (1T - Opcional)"
+              fields={[
+                ["homeGoalsFirstHalf", `Goles 1T ${activeMatch?.homeTeam.shortName ?? "Local"}`],
+                ["awayGoalsFirstHalf", `Goles 1T ${activeMatch?.awayTeam.shortName ?? "Visitante"}`],
+              ]}
+              form={form}
+              setForm={setForm}
+            />
+
+            <OutcomeFields
+              title="Córners Totales (Opcional)"
+              fields={[
+                ["homeCorners", `Córners ${activeMatch?.homeTeam.shortName ?? "Local"}`],
+                ["awayCorners", `Córners ${activeMatch?.awayTeam.shortName ?? "Visitante"}`],
+              ]}
+              form={form}
+              setForm={setForm}
+            />
+
+            <OutcomeFields
+              title="Tarjetas Amarillas (Opcional)"
+              fields={[
+                ["homeYellowCards", `Amarillas ${activeMatch?.homeTeam.shortName ?? "Local"}`],
+                ["awayYellowCards", `Amarillas ${activeMatch?.awayTeam.shortName ?? "Visitante"}`],
+              ]}
+              form={form}
+              setForm={setForm}
+            />
+
+            <OutcomeFields
+              title="Tarjetas Rojas (Opcional)"
+              fields={[
+                ["homeRedCards", `Rojas ${activeMatch?.homeTeam.shortName ?? "Local"}`],
+                ["awayRedCards", `Rojas ${activeMatch?.awayTeam.shortName ?? "Visitante"}`],
+              ]}
+              form={form}
+              setForm={setForm}
+            />
+
+            {formError && <p className="text-xs font-semibold text-red-400">{formError}</p>}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setActiveMatch(null)} className="border-slate-800 bg-slate-900 text-white">
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleSaveOutcome} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1.5">
+              <FileCheck2 className="h-4 w-4" /> Guardar y Auditar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-function TicketMatchAudit({ ticket, match, onSettle }: { ticket: TrackedTicket; match: TrackedTicketMatch; onSettle: (ticket: TrackedTicket, match: TrackedTicketMatch) => void }) {
-  const home = getTeamById(match.homeTeamId);
-  const away = getTeamById(match.awayTeamId);
-  const matchStatus = STATUS_STYLE[match.status];
-  const winner = match.winnerPrediction;
+function OutcomeFields({
+  title,
+  fields,
+  form,
+  setForm,
+  required = false,
+}: {
+  title: string;
+  fields: [keyof OutcomeForm, string][];
+  form: OutcomeForm;
+  setForm: React.Dispatch<React.SetStateAction<OutcomeForm>>;
+  required?: boolean;
+}) {
   return (
-    <section className="rounded-xl border border-border/80 bg-background/35 p-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-foreground">{home?.shortName ?? match.homeTeamId} <span className="text-muted-foreground">vs</span> {away?.shortName ?? match.awayTeamId}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">{match.competition} · {formatDateLong(match.date)} · {match.time}</p>
-        </div>
-        <Badge variant="outline" className={cn("text-[10px]", matchStatus.className)}>{matchStatus.label}</Badge>
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 space-y-2">
+      <p className="text-xs font-bold text-slate-200">
+        {title}
+        {required && <span className="ml-1 text-red-400">*</span>}
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        {fields.map(([key, label]) => (
+          <label key={key} className="text-[11px] font-medium text-slate-400 block space-y-1">
+            <span>{label}</span>
+            <Input
+              type="number"
+              min="0"
+              step="1"
+              required={required}
+              value={form[key]}
+              onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+              className="h-8 border-slate-800 bg-slate-950 text-white font-mono text-sm"
+              placeholder="0"
+            />
+          </label>
+        ))}
       </div>
-      {winner && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2.5 py-2 text-xs">
-          <span className="font-semibold text-cyan-300">Ganador previsto: {winner.label} ({winner.probability}%)</span>
-          <span className="text-muted-foreground">1 {winner.homeWinProbability}% · X {winner.drawProbability}% · 2 {winner.awayWinProbability}%</span>
-          {winner.correct !== undefined && <span className={winner.correct ? "font-semibold text-brand-green-bright" : "font-semibold text-brand-red"}>{winner.correct ? "Acertó ganador" : "Falló ganador"}</span>}
-        </div>
-      )}
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {match.selections.map((selection) => {
-          const state = SELECTION_STATUS[selection.status];
-          return <div key={selection.id} className="rounded-lg border border-border/70 bg-muted/15 p-2"><div className="flex justify-between gap-2"><span className="text-xs font-medium text-foreground">{selection.marketName}</span><span className={cn("shrink-0 text-[10px] font-semibold", state.className)}>{state.label}</span></div><p className="mt-1 text-[10px] text-muted-foreground"><span className="font-semibold text-brand-green-bright">{selection.probability}%</span> prob. · {selection.confidence}% conf.</p>{selection.settlementNote && <p className="mt-1 text-[10px] text-muted-foreground">{selection.settlementNote}</p>}</div>;
-        })}
-      </div>
-      <div className="mt-3 flex items-center justify-between border-t border-border/70 pt-3"><p className="text-xs text-muted-foreground">{match.outcome ? `Resultado: ${match.outcome.homeGoals}-${match.outcome.awayGoals}` : "Resultado pendiente"}</p><Button size="sm" variant="outline" onClick={() => onSettle(ticket, match)}><FileCheck2 /> {match.outcome ? "Editar resultado" : "Registrar resultado"}</Button></div>
-    </section>
+    </div>
   );
-}
-
-function OutcomeFields({ title, fields, form, setForm, required = false }: { title: string; fields: [keyof OutcomeForm, string][]; form: OutcomeForm; setForm: React.Dispatch<React.SetStateAction<OutcomeForm>>; required?: boolean }) {
-  return <section><p className="mb-1.5 text-xs font-semibold text-foreground">{title}{required && <span className="ml-1 text-destructive">*</span>}</p><div className="grid grid-cols-2 gap-2">{fields.map(([key, label]) => <label key={key} className="text-[11px] text-muted-foreground">{label}<Input type="number" min="0" step="1" required={required} value={form[key]} onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))} className="mt-1" /></label>)}</div></section>;
 }

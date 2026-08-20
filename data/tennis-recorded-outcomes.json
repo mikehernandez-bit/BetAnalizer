@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "outcomes": {
+    "atp-cincinnati-2026-nakashima-medvedev": {
+      "id": "atp-cincinnati-2026-nakashima-medvedev",
+      "winner": "Brandon Nakašima",
+      "score": "6-7 7-6 6-1",
+      "recordedAt": "2026-08-18T22:22:51.659Z"
+    },
+    "atp-challenger-kingston-2026-willwerth-bueno": {
+      "id": "atp-challenger-kingston-2026-willwerth-bueno",
+      "winner": "Gonzalo Bueno",
+      "score": "3-6 6-2 6-2",
+      "recordedAt": "2026-08-18T22:21:44.224Z"
+    },
+    "atp-cincinnati-2026-faria-walton": {
+      "id": "atp-cincinnati-2026-faria-walton",
+      "winner": "Žaime Faria",
+      "score": "4-6 6-4 7-6",
+      "recordedAt": "2026-08-19T03:13:35.299Z"
+    },
+    "atp-challenger-quebec-2026-dejong-sweeny": {
+      "id": "atp-challenger-quebec-2026-dejong-sweeny",
+      "winner": "Žesper De Žong",
+      "score": "7-5 6-0",
+      "recordedAt": "2026-08-19T03:14:54.566Z"
+    },
+    "atp-challenger-quebec-2026-maestrelli-popyrin": {
+      "id": "atp-challenger-quebec-2026-maestrelli-popyrin",
+      "winner": "Aleksei Popirin",
+      "score": "7-5 6-1",
+      "recordedAt": "2026-08-19T03:15:34.279Z"
+    },
+    "atp-challenger-quebec-2026-bonzi-boulais": {
+      "id": "atp-challenger-quebec-2026-bonzi-boulais",
+      "winner": "Benžamin Bonzi",
+      "score": "7-6 6-3",
+      "recordedAt": "2026-08-19T03:16:30.472Z"
+    },
+    "atp-challenger-kingston-2026-schwarzler-miyoshi": {
+      "id": "atp-challenger-kingston-2026-schwarzler-miyoshi",
+      "winner": "Kenta Miioši",
+      "score": "6-2 7-5",
+      "recordedAt": "2026-08-19T03:17:52.948Z"
+    },
+    "wta-cincinnati-2026-sabalenka-wang": {
+      "id": "wta-cincinnati-2026-sabalenka-wang",
+      "winner": "Arina Sabalenka",
+      "score": "6-1 6-3",
+      "recordedAt": "2026-08-19T03:18:54.276Z"
+    },
+    "atp-cincinnati-2026-cerundolo-aliassime": {
+      "id": "atp-cincinnati-2026-cerundolo-aliassime",
+      "winner": "Feliks Auger-Aliassime",
+      "score": "7-5 6-1",
+      "recordedAt": "2026-08-19T03:33:19.638Z"
+    },
+    "atp-cincinnati-2026-jodar-cobolli": {
+      "id": "atp-cincinnati-2026-jodar-cobolli",
+      "winner": "Flavio Kobolli",
+      "score": "4-7 7-6 6-3",
+      "recordedAt": "2026-08-19T21:24:39.710Z"
+    },
+    "wta-cincinnati-2026-swiatek-parry": {
+      "id": "wta-cincinnati-2026-swiatek-parry",
+      "winner": "Iga Swiatek",
+      "score": "6-3 6-3",
+      "recordedAt": "2026-08-19T21:25:59.399Z"
+    },
+    "atp-cincinnati-2026-tirante-mensik": {
+      "id": "atp-cincinnati-2026-tirante-mensik",
+      "winner": "Siago Agustin Tirante",
+      "score": "5-7 6-4 6-4",
+      "recordedAt": "2026-08-19T21:26:33.215Z"
+    },
+    "wta-cincinnati-2026-cirstea-pegula": {
+      "id": "wta-cincinnati-2026-cirstea-pegula",
+      "winner": "Žessika Pegula",
+      "score": "6-2 4-6 7-5",
+      "recordedAt": "2026-08-19T21:27:20.905Z"
+    },
+    "atp-challenger-quebec-2026-chan-daniel": {
+      "id": "atp-challenger-quebec-2026-chan-daniel",
+      "winner": "Taro Daniel",
+      "score": "6-3 6-2",
+      "recordedAt": "2026-08-19T21:27:48.258Z"
+    },
+    "atp-challenger-quebec-2026-sakellaridis-blanchet": {
+      "id": "atp-challenger-quebec-2026-sakellaridis-blanchet",
+      "winner": "Stefanos Sakellaridis",
+      "score": "6-4 3-6 6-2",
+      "recordedAt": "2026-08-19T21:28:15.763Z"
+    },
+    "wta-cincinnati-2026-kostyuk-andreeva": {
+      "id": "wta-cincinnati-2026-kostyuk-andreeva",
+      "winner": "Marta Kostjuk",
+      "score": "4-6 6-0 6-2",
+      "recordedAt": "2026-08-19T21:32:02.238Z"
+    }
+  }
+}

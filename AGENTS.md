@@ -12,7 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 1. **Exclusión Estricta de Partidos Amistosos**:
    - NUNCA incluir partidos amistosos (`Club Friendlies`, `Amistoso`, `Club Frien...`) en los historiales de los equipos (`histories`).
-   - Todos los historiales deben contener exactamente **10 partidos 100% oficiales** (Liga / Copa). Si hay amistosos en la vista general, usar la segunda página/captura para completar los 10 partidos oficiales.
+   - Todos los historiales deben contener exactamente **15 partidos 100% oficiales** (Liga / Copa / Torneos Continentales). Si hay amistosos en la vista general, descartarlos y usar las siguientes capturas para completar los 15 partidos oficiales.
 
 2. **Precisión Absoluta en el 1er Tiempo (1T)**:
    - La Columna 1 del marcador es el Resultado Final (FT).

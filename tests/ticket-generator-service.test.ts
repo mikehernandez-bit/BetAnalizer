@@ -5,7 +5,8 @@ import { defaultAnalysisConfig, generateAnalysis } from "@/services/analysis-ser
 
 describe("Ticket Generator Service", () => {
   it("reutiliza exactamente la evaluación de Mercados para cada selección", () => {
-    const match = getUpcomingMatches()[0];
+    const now = new Date(2026, 7, 10, 12, 0, 0, 0);
+    const match = getUpcomingMatches(now)[0];
     expect(match).toBeDefined();
 
     const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
@@ -14,6 +15,7 @@ describe("Ticket Generator Service", () => {
       minProbability: 0,
       matchId: match.id,
       maxPerMatch: Infinity,
+      now,
     });
 
     for (const selection of ticket.selections) {
@@ -26,19 +28,19 @@ describe("Ticket Generator Service", () => {
   });
 
   it("expone el mismo 1X2 y doble oportunidad de Mercados al inicio del ticket", () => {
-    const match = getUpcomingMatches()[0];
-    expect(match).toBeDefined();
-
-    const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
+    const now = new Date(2026, 7, 10, 12, 0, 0, 0);
     const ticket = generateBetTicket({
       minConfidence: 0,
       minProbability: 0,
-      matchId: match.id,
       maxPerMatch: 1,
+      now,
     });
-    const summary = ticket.resultSummaries.find((item) => item.matchId === match.id);
+    const summary = ticket.resultSummaries[0];
+    const match = getUpcomingMatches(now).find((item) => item.id === summary?.matchId);
 
     expect(summary).toBeDefined();
+    expect(match).toBeDefined();
+    const analysis = generateAnalysis(defaultAnalysisConfig(match!.homeTeamId, match!.awayTeamId, 10));
     for (const ticketMarket of [summary!.homeWin, summary!.draw, summary!.awayWin, summary!.doubleChanceHome, summary!.doubleChanceAway]) {
       const market = analysis.markets.find((item) => item.id === ticketMarket.id);
       expect(market).toBeDefined();

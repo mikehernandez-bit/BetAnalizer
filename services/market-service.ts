@@ -10,6 +10,8 @@ import {
   MarketRecommendationState,
   RiskFactor,
   RiskLevel,
+  ResultCalibrationProfile,
+  MarketReliabilityProfile,
   Team,
   TeamMatchRecord,
 } from "@/types";
@@ -26,6 +28,11 @@ export interface MarketEvalContext {
   commonOpponents: CommonOpponentsAnalysis;
   includeH2H: boolean;
   includeCommonOpponents: boolean;
+  /** Prioriza de forma decreciente los partidos más recientes. */
+  weightRecentResults?: boolean;
+  /** Sesgo 1X2 aprendido de predicciones prepartido ya auditadas. */
+  resultCalibration?: ResultCalibrationProfile;
+  marketReliability?: MarketReliabilityProfile;
 }
 
 function ratio(records: TeamMatchRecord[], predicate: (r: TeamMatchRecord) => boolean) {
@@ -798,23 +805,50 @@ function normalizeOutcomeDistribution(home: number, draw: number, away: number, 
  * Distribución 1X2 con suavizado de Laplace. La perspectiva siempre queda
  * expresada respecto al partido actual: local / empate / visitante.
  */
-function outcomeDistributionFromRecords(records: TeamMatchRecord[], perspective: "home" | "away"): OutcomeDistribution {
+function recencyWeight(index: number, enabled: boolean): number {
+  // Los historiales se ordenan del más reciente al más antiguo. Con 10
+  // partidos, el décimo aún conserva ~38% del peso del primero.
+  return enabled ? Math.pow(0.9, index) : 1;
+}
+
+function weightedRecordAverage(
+  records: TeamMatchRecord[],
+  selector: (record: TeamMatchRecord) => number,
+  weightRecent: boolean
+): number {
+  if (records.length === 0) return 0;
+  const totals = records.reduce(
+    (acc, record, index) => {
+      const weight = recencyWeight(index, weightRecent);
+      return { value: acc.value + selector(record) * weight, weight: acc.weight + weight };
+    },
+    { value: 0, weight: 0 }
+  );
+  return totals.weight === 0 ? 0 : totals.value / totals.weight;
+}
+
+function outcomeDistributionFromRecords(
+  records: TeamMatchRecord[],
+  perspective: "home" | "away",
+  weightRecent = false
+): OutcomeDistribution {
   let home = 1;
   let draw = 1;
   let away = 1;
 
-  for (const record of records) {
+  records.forEach((record, index) => {
+    const weight = recencyWeight(index, weightRecent);
     if (record.goalsFor === record.goalsAgainst) {
-      draw += 1;
+      draw += weight;
     } else if (record.goalsFor > record.goalsAgainst) {
-      if (perspective === "home") home += 1;
-      else away += 1;
+      if (perspective === "home") home += weight;
+      else away += weight;
     } else if (perspective === "home") {
-      away += 1;
+      away += weight;
     } else {
-      home += 1;
+      home += weight;
     }
-  }
+  });
 
   return normalizeOutcomeDistribution(home, draw, away, records.length);
 }
@@ -866,10 +900,13 @@ function outcomeDistributionFromCommonOpponents(ctx: MarketEvalContext): Outcome
  * de local y visitante es pareja.
  */
 function outcomeDistributionFromGoalStrength(ctx: MarketEvalContext): { distribution: OutcomeDistribution; homeGoals: number; awayGoals: number } {
-  const homeFor = contextualAverage(ctx.homeRecords, "local", (record) => record.goalsFor).value;
-  const homeAgainst = contextualAverage(ctx.homeRecords, "local", (record) => record.goalsAgainst).value;
-  const awayFor = contextualAverage(ctx.awayRecords, "visitante", (record) => record.goalsFor).value;
-  const awayAgainst = contextualAverage(ctx.awayRecords, "visitante", (record) => record.goalsAgainst).value;
+  const weightRecent = ctx.weightRecentResults === true;
+  const homeVenue = contextualRecords(ctx.homeRecords, "local");
+  const awayVenue = contextualRecords(ctx.awayRecords, "visitante");
+  const homeFor = weightedRecordAverage(homeVenue, (record) => record.goalsFor, weightRecent);
+  const homeAgainst = weightedRecordAverage(homeVenue, (record) => record.goalsAgainst, weightRecent);
+  const awayFor = weightedRecordAverage(awayVenue, (record) => record.goalsFor, weightRecent);
+  const awayAgainst = weightedRecordAverage(awayVenue, (record) => record.goalsAgainst, weightRecent);
   const homeGoals = Math.max(0.2, (homeFor + awayAgainst) / 2);
   const awayGoals = Math.max(0.2, (awayFor + homeAgainst) / 2);
 
@@ -897,6 +934,19 @@ function outcomeDistributionFromGoalStrength(ctx: MarketEvalContext): { distribu
     homeGoals,
     awayGoals,
   };
+}
+
+function applyResultCalibration(
+  distribution: OutcomeDistribution,
+  calibration?: ResultCalibrationProfile
+): OutcomeDistribution {
+  if (!calibration || calibration.sampleSize < 5) return distribution;
+  return normalizeOutcomeDistribution(
+    distribution.home * calibration.homeMultiplier,
+    distribution.draw * calibration.drawMultiplier,
+    distribution.away * calibration.awayMultiplier,
+    distribution.sampleSize
+  );
 }
 
 function outcomeProbability(distribution: OutcomeDistribution, marketId: string): number {
@@ -938,12 +988,13 @@ function resolveResult(marketId: string, ctx: MarketEvalContext): ResolvedMarket
   const goalStrength = outcomeDistributionFromGoalStrength(ctx);
   const h2hSample = ctx.headToHead.matches.length;
   const commonSample = ctx.commonOpponents.opponents.length;
+  const weightRecent = ctx.weightRecentResults === true;
 
   const sources: ResultProjectionSource[] = [
     {
       id: "home-venue",
       label: `${ctx.homeTeam.shortName} como local`,
-      distribution: outcomeDistributionFromRecords(homeAtHome, "home"),
+      distribution: outcomeDistributionFromRecords(homeAtHome, "home", weightRecent),
       weight: 0.22,
       detail: homeVenueApplied
         ? `${homeAtHome.length} partidos de ${ctx.homeTeam.shortName} como local.`
@@ -953,7 +1004,7 @@ function resolveResult(marketId: string, ctx: MarketEvalContext): ResolvedMarket
     {
       id: "away-venue",
       label: `${ctx.awayTeam.shortName} como visitante`,
-      distribution: outcomeDistributionFromRecords(awayAway, "away"),
+      distribution: outcomeDistributionFromRecords(awayAway, "away", weightRecent),
       weight: 0.22,
       detail: awayVenueApplied
         ? `${awayAway.length} partidos de ${ctx.awayTeam.shortName} como visitante.`
@@ -963,7 +1014,7 @@ function resolveResult(marketId: string, ctx: MarketEvalContext): ResolvedMarket
     {
       id: "home-total",
       label: `Historial total ${ctx.homeTeam.shortName}`,
-      distribution: outcomeDistributionFromRecords(ctx.homeRecords, "home"),
+      distribution: outcomeDistributionFromRecords(ctx.homeRecords, "home", weightRecent),
       weight: 0.13,
       detail: `${ctx.homeRecords.length} partidos oficiales recientes de ${ctx.homeTeam.shortName}.`,
       applied: ctx.homeRecords.length > 0,
@@ -971,7 +1022,7 @@ function resolveResult(marketId: string, ctx: MarketEvalContext): ResolvedMarket
     {
       id: "away-total",
       label: `Historial total ${ctx.awayTeam.shortName}`,
-      distribution: outcomeDistributionFromRecords(ctx.awayRecords, "away"),
+      distribution: outcomeDistributionFromRecords(ctx.awayRecords, "away", weightRecent),
       weight: 0.13,
       detail: `${ctx.awayRecords.length} partidos oficiales recientes de ${ctx.awayTeam.shortName}.`,
       applied: ctx.awayRecords.length > 0,
@@ -1003,7 +1054,8 @@ function resolveResult(marketId: string, ctx: MarketEvalContext): ResolvedMarket
     },
   ];
 
-  const projection = blendOutcomeDistributions(sources);
+  const baseProjection = blendOutcomeDistributions(sources);
+  const projection = applyResultCalibration(baseProjection, ctx.resultCalibration);
   const estimate = outcomeProbability(projection, marketId);
   const targetLabel = resultOutcomeLabel(marketId, ctx.homeTeam, ctx.awayTeam);
   const targetSourceValues = sources.filter(
@@ -1020,13 +1072,13 @@ function resolveResult(marketId: string, ctx: MarketEvalContext): ResolvedMarket
   const lastThreeProjection = blendOutcomeDistributions([
     {
       ...recentHome,
-      distribution: outcomeDistributionFromRecords(ctx.homeRecords.slice(0, 3), "home"),
+      distribution: outcomeDistributionFromRecords(ctx.homeRecords.slice(0, 3), "home", weightRecent),
       weight: 0.5,
       applied: ctx.homeRecords.length > 0,
     },
     {
       ...recentAway,
-      distribution: outcomeDistributionFromRecords(ctx.awayRecords.slice(0, 3), "away"),
+      distribution: outcomeDistributionFromRecords(ctx.awayRecords.slice(0, 3), "away", weightRecent),
       weight: 0.5,
       applied: ctx.awayRecords.length > 0,
     },
@@ -1050,14 +1102,27 @@ function resolveResult(marketId: string, ctx: MarketEvalContext): ResolvedMarket
   return {
     estimate,
     sampleSize: Math.min(ctx.homeRecords.length, ctx.awayRecords.length),
-    probabilitySignals: targetSourceValues.map((source) => ({
-      label: source.label,
-      value: `${outcomeProbability(source.distribution, marketId)}%`,
-      detail: `${source.detail} Probabilidad para ${targetLabel}: ${outcomeProbability(source.distribution, marketId)}%${source.applied ? "." : " No se pondera por muestra insuficiente."}`,
-    })),
+    probabilitySignals: [
+      ...targetSourceValues.map((source) => ({
+        label: source.label,
+        value: `${outcomeProbability(source.distribution, marketId)}%`,
+        detail: `${source.detail} Probabilidad para ${targetLabel}: ${outcomeProbability(source.distribution, marketId)}%${source.applied ? "." : " No se pondera por muestra insuficiente."}`,
+      })),
+      ...(ctx.resultCalibration && ctx.resultCalibration.sampleSize >= 5
+        ? [{
+            label: "Calibración con resultados cerrados",
+            value: `${estimate}%`,
+            detail: `${ctx.resultCalibration.sampleSize} pronósticos prepartido verificados; acierto 1X2 ${ctx.resultCalibration.winnerAccuracyRate}% y Brier ${ctx.resultCalibration.brierScore.toFixed(3)}.`,
+          }]
+        : []),
+    ],
     positivePatterns: [
       `Proyección 1X2: ${ctx.homeTeam.shortName} ${projection.home}% · Empate ${projection.draw}% · ${ctx.awayTeam.shortName} ${projection.away}%.`,
       `La estimación de ${targetLabel} es ${estimate}% y combina ${sources.filter((source) => source.applied).map((source) => source.label).join(", ")}.`,
+      ...(weightRecent ? ["Los partidos más recientes reciben mayor peso que los más antiguos."] : []),
+      ...(ctx.resultCalibration && ctx.resultCalibration.sampleSize >= 5
+        ? [`Calibración activa con ${ctx.resultCalibration.sampleSize} resultados auditados sin fuga de datos.`]
+        : []),
     ],
     contradictions: [
       ...(homeVenueApplied ? [] : [`Muestra local reducida de ${ctx.homeTeam.shortName}; el historial total recibe la ponderación correspondiente.`]),
@@ -1947,15 +2012,27 @@ export function evaluateAllMarkets(ctx: MarketEvalContext, oddsOverrides: Partia
       const decimalOdds = oddsOverrides[market.id];
       const odds: BettingOdds | undefined =
         decimalOdds !== undefined ? { marketId: market.id, decimalOdds, impliedProbability: impliedProbability(decimalOdds) } : undefined;
-      const diff = decimalOdds !== undefined ? valueDifference(resolved.estimate, decimalOdds) : undefined;
-
       const unguardedConfidence = Number.isFinite(confidenceBreakdown.finalScore) ? confidenceBreakdown.finalScore : 50;
-      const confScore = Math.min(unguardedConfidence, resolved.confidenceCap ?? 100);
+      const reliability = ctx.marketReliability?.[market.id];
+      const reliabilityCap = reliability && reliability.accuracyRate < 70 ? 55 : 100;
+      const confScore = Math.min(unguardedConfidence, resolved.confidenceCap ?? 100, reliabilityCap);
       if (confScore !== unguardedConfidence) {
         confidenceBreakdown.finalScore = confScore;
         confidenceBreakdown.classification = classifyConfidence(confScore);
       }
-      const statEst = Number.isFinite(resolved.estimate) ? resolved.estimate : 50;
+      const rawStatEst = Number.isFinite(resolved.estimate) ? resolved.estimate : 50;
+      const canCalibrateMarket = Boolean(reliability && !market.id.startsWith("result_"));
+      const statEst = canCalibrateMarket
+        ? clampPercentage(
+            (((rawStatEst / 100) * reliability!.probabilityMultiplier) /
+              ((rawStatEst / 100) * reliability!.probabilityMultiplier + (1 - rawStatEst / 100))) *
+              100
+          )
+        : rawStatEst;
+      const reliabilityNote = reliability
+        ? `Auditoría histórica del mercado: ${reliability.hits}/${reliability.sampleSize} aciertos (${reliability.accuracyRate}%).`
+        : undefined;
+      const diff = decimalOdds !== undefined ? valueDifference(statEst, decimalOdds) : undefined;
 
       const evaluation: MarketEvaluation = {
         id: `${market.id}-${ctx.homeTeam.id}-${ctx.awayTeam.id}`,
@@ -1969,19 +2046,29 @@ export function evaluateAllMarkets(ctx: MarketEvalContext, oddsOverrides: Partia
         valueDifference: diff,
         valueLevel: diff !== undefined ? classifyValue(diff) : undefined,
         riskLevel: riskLevelFor(confScore, resolved.sampleSize, (resolved.contradictions ?? []).length),
-        positivePatterns: resolved.positivePatterns ?? [],
+        positivePatterns: [
+          ...(resolved.positivePatterns ?? []),
+          ...(reliability && reliability.accuracyRate >= 70 ? [reliabilityNote!] : []),
+        ],
         probabilitySignals: resolved.probabilitySignals,
         evidence: buildMarketEvidence(market.id, ctx, resolved),
-        contradictions: resolved.contradictions ?? [],
+        contradictions: [
+          ...(resolved.contradictions ?? []),
+          ...(reliability && reliability.accuracyRate < 70
+            ? [`${reliabilityNote} No se recomienda hasta recuperar al menos 70% de aciertos auditados.`]
+            : []),
+        ],
         dataQuality: dataQualityLabel(confidenceBreakdown.dataQuality),
         sampleSize: resolved.sampleSize,
-        recommendation: recommendationFor(
-          confScore,
-          resolved.sampleSize,
-          resolved.recommendationThreshold,
-          statEst,
-          resolved.recommendationProbabilityThreshold
-        ),
+        recommendation: reliability && reliability.accuracyRate < 70
+          ? "evitar"
+          : recommendationFor(
+              confScore,
+              resolved.sampleSize,
+              resolved.recommendationThreshold,
+              statEst,
+              resolved.recommendationProbabilityThreshold
+            ),
       };
       results.push(evaluation);
     } catch (_err) {

@@ -8,4 +8,4 @@ services:
       # lo que se importe desde "Agregar partido" queda guardado en tu disco
       # y sobrevive a un `docker compose down` / rebuild de la imagen.
       - ./data:/app/data
-    restart: unless-stopped
+    restart: "no"

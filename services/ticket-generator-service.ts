@@ -1,5 +1,5 @@
 import { Match, MarketEvaluation, Team } from "@/types";
-import { getUpcomingMatches, isMatchExpired } from "@/data/matches";
+import { getUpcomingMatches, hasMatchStarted, isMatchExpired } from "@/data/matches";
 import { teams } from "@/data/teams";
 import { defaultAnalysisConfig, generateAnalysis } from "@/services/analysis-service";
 
@@ -67,6 +67,8 @@ export interface TicketGeneratorOptions {
   matchId?: string;
   maxSelections?: number;
   maxPerMatch?: number; // default 1 (or Infinity if matchId provided and maxPerMatch not set)
+  /** Reloj inyectable para pruebas y reproducciones históricas. */
+  now?: Date;
 }
 
 /**
@@ -126,10 +128,11 @@ export function generateBetTicket(options: TicketGeneratorOptions): GeneratedTic
     matchId,
     maxSelections = Infinity,
     maxPerMatch = Infinity,
+    now,
   } = options;
 
   // STRICTLY filter for ONLY active, non-expired upcoming/live matches
-  const activeMatches = getUpcomingMatches();
+  const activeMatches = getUpcomingMatches(now);
 
   let candidateMatches = activeMatches;
   if (matchId) {
@@ -144,13 +147,13 @@ export function generateBetTicket(options: TicketGeneratorOptions): GeneratedTic
 
   for (const match of candidateMatches) {
     // Double check match is not expired
-    if (isMatchExpired(match)) {
+    if (isMatchExpired(match, now) || hasMatchStarted(match, now)) {
       skippedMatches.push({
         matchId: match.id,
         matchLabel: `${match.homeTeamId} vs ${match.awayTeamId}`,
         matchTime: match.time,
         reason: "expired",
-        detail: "El partido ya ha comenzado o ha finalizado.",
+        detail: "El partido ya comenzó o finalizó; no se crea una predicción prepartido tardía.",
       });
       continue;
     }

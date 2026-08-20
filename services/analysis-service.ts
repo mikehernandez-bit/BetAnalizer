@@ -1,4 +1,4 @@
-import { AnalysisConfig, AnalysisResult, Match, MatchSampleSize, RadarProfile, Team } from "@/types";
+import { AnalysisConfig, AnalysisResult, MarketReliabilityProfile, Match, MatchSampleSize, RadarProfile, ResultCalibrationProfile, Team } from "@/types";
 import { getTeamById } from "@/data/teams";
 import { matches } from "@/data/matches";
 import { getHeadToHead } from "@/data/head-to-head";
@@ -7,6 +7,7 @@ import { getFilteredTeamForm, TeamFormOptions } from "@/services/team-service";
 import { computeCrossPatterns, computeTeamPatterns, mean } from "@/utils/statistics";
 import { evaluateAllMarkets, buildRecommendations, MarketEvalContext } from "@/services/market-service";
 import { dataQualityFromSampleSize, dataQualityLabel } from "@/utils/confidence";
+import { readStoredMarketReliability, readStoredResultCalibration } from "@/lib/model-feedback";
 
 export function buildAnalysisId(homeTeamId: string, awayTeamId: string, matchCount: number): string {
   return `${homeTeamId}-vs-${awayTeamId}-${matchCount}c`;
@@ -141,7 +142,11 @@ function buildQuickRead(homeTeam: Team, awayTeam: Team, homeForm: ReturnType<typ
   return sentences.join(" ");
 }
 
-export function generateAnalysis(config: AnalysisConfig): AnalysisResult {
+export function generateAnalysis(
+  config: AnalysisConfig,
+  resultCalibration: ResultCalibrationProfile | undefined = readStoredResultCalibration(),
+  marketReliability: MarketReliabilityProfile = readStoredMarketReliability()
+): AnalysisResult {
   const homeTeam = getTeamById(config.homeTeamId);
   const awayTeam = getTeamById(config.awayTeamId);
   if (!homeTeam || !awayTeam) {
@@ -167,6 +172,9 @@ export function generateAnalysis(config: AnalysisConfig): AnalysisResult {
     commonOpponents,
     includeH2H: config.includeH2H,
     includeCommonOpponents: config.includeCommonOpponents,
+    weightRecentResults: config.weightLastFive,
+    resultCalibration,
+    marketReliability,
   };
 
   const markets = evaluateAllMarkets(ctx, config.odds);
