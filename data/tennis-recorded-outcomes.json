@@ -228,6 +228,24 @@
       "winner": "Sara Bežlek",
       "score": "7-6 6-4",
       "recordedAt": "2026-08-20T21:20:28.826Z"
+    },
+    "atp-challenger-kingston-2026-prado-martinez": {
+      "id": "atp-challenger-kingston-2026-prado-martinez",
+      "winner": "Pedro Martínez",
+      "score": "6-7 6-4 6-3",
+      "recordedAt": "2026-08-21T14:01:09.758Z"
+    },
+    "atp-cancun-2026-rocha-hurkacz": {
+      "id": "atp-cancun-2026-rocha-hurkacz",
+      "winner": "Hubert Hurkacz",
+      "score": "6-2 4-6 6-4",
+      "recordedAt": "2026-08-21T14:01:46.721Z"
+    },
+    "atp-cancun-2026-kopriva-onclin": {
+      "id": "atp-cancun-2026-kopriva-onclin",
+      "winner": "Vit Kopriva",
+      "score": "6-4 6-4",
+      "recordedAt": "2026-08-21T14:02:13.863Z"
     }
   }
 }
