@@ -12,6 +12,8 @@ import {
   Layers,
   Percent,
   RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
   Target,
   Trash2,
   Trophy,
@@ -19,6 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import {
+  HistoryRiskTier,
   ThreeDayAuditedMatch,
   ThreeDayAuditSummary,
   scanThreeDayAuditMatches,
@@ -126,22 +129,28 @@ export function BetRecordsDashboard() {
   const [summary, setSummary] = React.useState<ThreeDayAuditSummary | null>(null);
   const [mounted, setMounted] = React.useState(false);
   const [dayFilter, setDayFilter] = React.useState<DayFilter>("today");
+  const [riskTier, setRiskTier] = React.useState<HistoryRiskTier>("balanced");
   const [activeMatch, setActiveMatch] = React.useState<ThreeDayAuditedMatch | null>(null);
   const [form, setForm] = React.useState<OutcomeForm>(EMPTY_OUTCOME);
   const [formError, setFormError] = React.useState("");
 
-  const refreshAudit = React.useCallback(() => {
-    const fresh = scanThreeDayAuditMatches();
+  const refreshAudit = React.useCallback((tier: HistoryRiskTier = riskTier) => {
+    const fresh = scanThreeDayAuditMatches(undefined, tier);
     setSummary(fresh);
-  }, []);
+  }, [riskTier]);
+
+  const handleRiskTierChange = (tier: HistoryRiskTier) => {
+    setRiskTier(tier);
+    refreshAudit(tier);
+  };
 
   React.useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
-      refreshAudit();
+      refreshAudit(riskTier);
       setMounted(true);
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [refreshAudit]);
+  }, [refreshAudit, riskTier]);
 
   const openSettlement = (match: ThreeDayAuditedMatch) => {
     setActiveMatch(match);
@@ -178,13 +187,13 @@ export function BetRecordsDashboard() {
     };
 
     saveRecordedOutcome(activeMatch.matchId, outcome);
-    refreshAudit();
+    refreshAudit(riskTier);
     setActiveMatch(null);
   };
 
   const handleResetOutcome = (matchId: string) => {
     deleteRecordedOutcome(matchId);
-    refreshAudit();
+    refreshAudit(riskTier);
   };
 
   if (!mounted || !summary) {
@@ -204,6 +213,8 @@ export function BetRecordsDashboard() {
   const tabAudited = tabHits + tabFailures;
   const tabAccuracy = tabAudited > 0 ? Math.round((tabHits / tabAudited) * 100) : null;
 
+  const thresholdLabel = riskTier === "ultra" ? "≥85%" : riskTier === "balanced" ? "≥80%" : "≥75%";
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
@@ -222,7 +233,7 @@ export function BetRecordsDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={refreshAudit} className="text-xs gap-1.5 border-slate-700 bg-slate-800 text-white hover:bg-slate-700">
+            <Button variant="outline" size="sm" onClick={() => refreshAudit(riskTier)} className="text-xs gap-1.5 border-slate-700 bg-slate-800 text-white hover:bg-slate-700">
               <RefreshCw className="h-3.5 w-3.5 text-emerald-400" /> Re-escanear
             </Button>
             <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs gap-1.5">
@@ -234,10 +245,68 @@ export function BetRecordsDashboard() {
         </div>
       </section>
 
+      {/* Risk Profile / Safety Filter Selector */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-800 bg-slate-900/80 p-3.5 shadow-lg backdrop-blur">
+        <div className="flex items-center gap-2.5">
+          <ShieldCheck className="h-5 w-5 text-emerald-400 shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-slate-200">Perfil de Seguridad y Calificación de Bets</p>
+            <p className="text-[11px] text-slate-400">
+              {riskTier === "ultra"
+                ? "Ultra Seguro (≥85% Prob & Conf): solo líneas amplias de máxima solidez (+0.5 goles, -3.5/-4.5 goles, Hándicaps +1.5/+2.5, tarjetas)."
+                : riskTier === "balanced"
+                ? "Balanceado (≥80% Prob & Conf): con exclusión automática de Under 1.5/2.5 de equipo para prevenir sorpresas."
+                : "Amplio (≥75% Prob & Conf): muestra el abanico completo de oportunidades del modelo."}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            variant={riskTier === "ultra" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleRiskTierChange("ultra")}
+            className={cn(
+              "text-xs font-bold gap-1.5 h-8",
+              riskTier === "ultra"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow"
+                : "border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-800"
+            )}
+          >
+            🛡️ Ultra Seguro (≥85%)
+          </Button>
+          <Button
+            variant={riskTier === "balanced" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleRiskTierChange("balanced")}
+            className={cn(
+              "text-xs font-bold gap-1.5 h-8",
+              riskTier === "balanced"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow"
+                : "border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-800"
+            )}
+          >
+            ⚖️ Balanceado (≥80%)
+          </Button>
+          <Button
+            variant={riskTier === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => handleRiskTierChange("all")}
+            className={cn(
+              "text-xs font-bold gap-1.5 h-8",
+              riskTier === "all"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow"
+                : "border-slate-800 bg-slate-950/60 text-slate-300 hover:bg-slate-800"
+            )}
+          >
+            📋 Amplio (≥75%)
+          </Button>
+        </div>
+      </div>
+
       {/* Metric Cards */}
       <div className="adaptive-stat-grid grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
         <StatCard icon={Layers} label="Partidos en Ventana" value={String(filteredMatches.length)} />
-        <StatCard icon={Target} label="Bets ≥80% Calificadas" value={String(allFilteredBets.length)} />
+        <StatCard icon={Target} label={`Bets ${thresholdLabel} Calificadas`} value={String(allFilteredBets.length)} />
         <StatCard icon={CheckCircle2} label="Bets Acertadas" value={String(tabHits)} accent="green" />
         <StatCard icon={XCircle} label="Bets Fallidas" value={String(tabFailures)} accent="red" />
         <StatCard
@@ -262,12 +331,12 @@ export function BetRecordsDashboard() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard icon={Layers} label="Partidos históricos auditados" value={String(summary.stats.lifetimeMatches)} />
-        <StatCard icon={Target} label="Bets históricas ≥80%" value={String(summary.stats.lifetimeAuditedBets)} />
+        <StatCard icon={Target} label={`Bets históricas ${thresholdLabel}`} value={String(summary.stats.lifetimeAuditedBets)} />
         <StatCard icon={CheckCircle2} label="Aciertos históricos" value={String(summary.stats.lifetimeHits)} accent="green" />
         <StatCard icon={XCircle} label="Fallos históricos" value={String(summary.stats.lifetimeFailures)} accent="red" />
         <StatCard
           icon={Percent}
-          label="Precisión histórica ≥80%"
+          label={`Precisión histórica ${thresholdLabel}`}
           value={summary.stats.lifetimeAccuracyRate !== null ? `${summary.stats.lifetimeAccuracyRate}%` : "Sin muestra"}
           accent={summary.stats.lifetimeAccuracyRate !== null && summary.stats.lifetimeAccuracyRate >= 70 ? "green" : "yellow"}
         />
@@ -337,8 +406,8 @@ export function BetRecordsDashboard() {
       {filteredMatches.length === 0 ? (
         <EmptyState
           icon={Layers}
-          title="No hay partidos con bets ≥80% en este filtro"
-          description="Los partidos de este día no superaron el umbral estricto del 80% en Probabilidad y Confianza en el catálogo de mercados."
+          title={`No hay partidos con bets ${thresholdLabel} en este filtro`}
+          description={`Los partidos de este día no superaron el umbral estricto de ${thresholdLabel} en Probabilidad y Confianza en el catálogo de mercados.`}
         />
       ) : (
         <div className="space-y-6">
@@ -462,7 +531,7 @@ export function BetRecordsDashboard() {
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                         <p className="font-bold text-slate-300 flex items-center gap-1.5">
-                          <Award className="h-3.5 w-3.5 text-amber-400" /> Bets Calificadas (≥80% Confianza y Probabilidad):
+                          <Award className="h-3.5 w-3.5 text-amber-400" /> Bets Calificadas ({thresholdLabel} Confianza y Probabilidad):
                         </p>
                         <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                           Ordenadas por mayor probabilidad (↓)
@@ -520,7 +589,7 @@ export function BetRecordsDashboard() {
                     <span className="text-slate-400">
                       {hasOutcome
                         ? `Marcador registrado (${match.hits} acertadas, ${match.failures} fallidas de ${match.totalBets})`
-                        : `Pendiente de disputa (${match.totalBets} apuestas ≥80% listas para auditar)`}
+                        : `Pendiente de disputa (${match.totalBets} apuestas ${thresholdLabel} listas para auditar)`}
                     </span>
                     <div className="flex items-center gap-2">
                       {hasOutcome && (

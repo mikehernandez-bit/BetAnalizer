@@ -2460,6 +2460,60 @@ export const BLANCH_WINSTON_SALEM_HISTORY: TennisHistoryMatch[] = [
   match("2026-05-01", "ATP Challenger", "clay", "Matsew William Donald", [set(6, 3), set(6, 4)], "completed", true, "player"),
 ];
 
+/**
+ * Transcripción de las 20 filas de las capturas de Soon Woo Kwon (US Open 2026).
+ * Todos los sets están orientados a Kwon, incluso cuando aparece abajo.
+ */
+export const KWON_USOPEN_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-20", "ATP Challenger", "hard", "Benžamin Bonzi", [], "walkover", false, "opponent"),
+  match("2026-08-19", "ATP Challenger", "hard", "Šintaro Motšizuki", [set(7, 5), set(4, 6), set(6, 3)], "completed", true, "player"),
+  match("2026-08-18", "ATP Challenger", "hard", "Andri Guerrieri", [set(6, 3), set(6, 3)], "completed", true, "player"),
+  match("2026-08-17", "ATP Challenger", "hard", "Kigan Smis", [set(4, 6), set(6, 3), set(6, 3)], "completed", true, "player"),
+  match("2026-08-11", "USA Cincinnati", "hard", "kuentin Halis", [set(6, 4), set(6, 7, 5, 7), set(4, 6)], "completed", false, "opponent"),
+  match("2026-08-05", "USA Lexington", "hard", "Andre Ilagan", [set(6, 3), set(6, 7, 4, 7), set(4, 6)], "completed", true, "opponent"),
+  match("2026-08-04", "USA Lexington", "hard", "Tristan Šulkate", [set(3, 6), set(5, 1)], "retired", false, "player"),
+  match("2026-08-03", "USA Lexington", "hard", "Aidan Kim", [set(3, 6), set(6, 2), set(6, 2)], "completed", true, "player"),
+  match("2026-08-02", "USA Lexington", "hard", "Gavin Jõung", [set(7, 5), set(6, 3)], "completed", true, "player"),
+  match("2026-07-28", "Mexico Los Cabos", "hard", "Arsur Gi", [set(4, 6), set(7, 6, 10, 8), set(2, 6)], "completed", true, "opponent"),
+  match("2026-07-26", "Mexico Los Cabos", "hard", "Edward Winter", [set(7, 5), set(6, 2)], "completed", true, "player"),
+  match("2026-07-25", "Mexico Los Cabos", "hard", "Alan Fernando Rubio Fierros", [set(6, 3), set(6, 4)], "completed", true, "player"),
+  match("2026-07-01", "Wimbledon", "grass", "Tommi Paul", [set(3, 6), set(6, 7, 4, 7), set(2, 6)], "completed", true, "opponent"),
+  match("2026-06-29", "Wimbledon", "grass", "Martin Landaluse", [set(6, 4), set(6, 3), set(6, 3)], "completed", true, "player"),
+  match("2026-06-25", "Wimbledon", "grass", "Alejandro Moro Cañaas", [set(6, 4), set(7, 6, 8, 6), set(6, 3)], "completed", false, "player"),
+  match("2026-06-24", "Wimbledon", "grass", "Arsur Gi", [set(5, 7), set(6, 3), set(6, 4)], "completed", true, "player"),
+  match("2026-06-22", "Wimbledon", "grass", "Nikolas Santšez Izvitsierdo", [set(7, 6, 9, 7), set(6, 3)], "completed", false, "player"),
+  match("2026-06-16", "ATP Challenger", "grass", "Otto Virtanen", [set(2, 6), set(5, 7)], "completed", true, "opponent"),
+  match("2026-06-14", "ATP Challenger", "grass", "Anton Matusevich", [set(3, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-06-13", "ATP Challenger", "grass", "Millen Hurrion", [set(6, 2), set(6, 4)], "completed", true, "player"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Dusan Lažovic (US Open 2026).
+ * Todos los sets están orientados a Lažovic, incluso cuando aparece abajo.
+ */
+export const LAJOVIC_USOPEN_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-18", "ATP Challenger", "hard", "Taro Daniel", [set(6, 7, 4, 7), set(6, 2), set(1, 6)], "completed", true, "opponent"),
+  match("2026-08-17", "ATP Challenger", "hard", "Rozin, Saša", [set(6, 2), set(6, 4)], "completed", true, "player"),
+  match("2026-08-12", "USA Cincinnati", "hard", "Luka van Asše", [set(6, 7, 5, 7), set(6, 2), set(3, 6)], "completed", false, "opponent"),
+  match("2026-08-11", "USA Cincinnati", "hard", "Benžamin Bonzi", [set(2, 6), set(7, 6, 7, 2), set(7, 6, 9, 7)], "completed", true, "player"),
+  match("2026-08-08", "USA Lexington", "hard", "Edas Butvilas", [set(2, 6), set(7, 6, 7, 5), set(2, 6)], "completed", false, "opponent"),
+  match("2026-08-07", "USA Lexington", "hard", "Abdullah Šelbaih", [set(7, 6, 7, 4), set(2, 6), set(6, 4)], "completed", false, "player"),
+  match("2026-08-05", "USA Lexington", "hard", "Lloid Harris", [set(0, 6), set(6, 3), set(6, 4)], "completed", false, "player"),
+  match("2026-08-04", "USA Lexington", "hard", "Žames McKabe", [set(6, 3), set(6, 7, 5, 7), set(6, 3)], "completed", false, "player"),
+  match("2026-07-25", "USA Washington", "hard", "Hewitt, cruz", [set(2, 5)], "retired", false, "opponent"),
+  match("2026-07-13", "Croatia Umag", "clay", "Luka van Asše", [set(6, 2), set(5, 7), set(4, 6)], "completed", true, "opponent"),
+  match("2026-06-30", "Wimbledon", "grass", "Tailor Fritz", [set(3, 6), set(4, 6), set(3, 6)], "completed", false, "opponent"),
+  match("2026-06-25", "Wimbledon", "grass", "Vilius Gaubas", [set(6, 3), set(4, 6), set(6, 3), set(3, 6), set(4, 6)], "completed", false, "opponent"),
+  match("2026-06-24", "Wimbledon", "grass", "Tšris Rodeš", [set(6, 2), set(6, 4)], "completed", false, "player"),
+  match("2026-06-22", "Wimbledon", "grass", "Lukas Neumair", [set(6, 4), set(6, 4)], "completed", false, "player"),
+  match("2026-06-11", "ATP Challenger", "clay", "Oriol Roka Batolla", [set(6, 7, 4, 7), set(6, 4), set(6, 7, 4, 7)], "completed", true, "opponent"),
+  match("2026-06-09", "ATP Challenger", "clay", "Žonas Forežtek", [set(6, 2), set(5, 7), set(6, 4)], "completed", true, "player"),
+  match("2026-06-04", "Italy Perugia", "clay", "Henrivitse Rotša", [set(4, 6), set(5, 7)], "completed", false, "opponent"),
+  match("2026-06-02", "Italy Perugia", "clay", "Gonzalo Bueno", [set(6, 4), set(6, 1)], "completed", false, "player"),
+  match("2026-05-19", "Roland-Garros", "clay", "Žuriž Rodionov", [set(2, 6), set(5, 7)], "completed", false, "opponent"),
+  match("2026-05-15", "ATP Challenger", "clay", "Aležandro Tabilo", [set(6, 4), set(5, 7), set(4, 6)], "completed", false, "opponent"),
+];
+
 const RAW_TENNIS_EVENTS: TennisStoredEvent[] = [
   {
     id: "atp-cincinnati-2026-rublev-borges",
@@ -3366,6 +3420,27 @@ const RAW_TENNIS_EVENTS: TennisStoredEvent[] = [
       "https://scores24.live/es/tennis/l-atp-atp-winston-salem-usa-men-singles",
       "https://scores24.live/es/tennis/t-hijikata-rinky",
       "https://scores24.live/es/tennis/t-blanch-darwin-2",
+    ],
+    note: "Transcripción exacta de 20 partidos oficiales por jugador.",
+  },
+  {
+    id: "atp-us-open-2026-kwon-lajovic",
+    status: "scheduled",
+    input: {
+      id: "atp-us-open-2026-kwon-lajovic",
+      tournament: "Open de EEUU, Indiv. Masc.",
+      date: "2026-08-25",
+      time: "10:00",
+      round: "Ronda de clasificación 1",
+      surface: "hard",
+      bestOf: 3,
+      player1: { name: "Soon Woo Kwon", matches: KWON_USOPEN_HISTORY },
+      player2: { name: "Dusan Lažovic", matches: LAJOVIC_USOPEN_HISTORY },
+    },
+    sourceUrls: [
+      "https://scores24.live/es/tennis/l-atp-us-open-men-singles",
+      "https://scores24.live/es/tennis/t-kwon-soon-woo",
+      "https://scores24.live/es/tennis/t-dusan-lajovic",
     ],
     note: "Transcripción exacta de 20 partidos oficiales por jugador.",
   },

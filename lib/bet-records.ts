@@ -614,7 +614,63 @@ function getTargetDates(referenceIso?: string): { yesterday: string; today: stri
   };
 }
 
-export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDayAuditSummary {
+export type HistoryRiskTier = "ultra" | "balanced" | "all";
+
+export function isSafeBroadLineMarket(marketId: string, riskTier: HistoryRiskTier = "balanced"): boolean {
+  // Micromercados de alta volatilidad excluidos de las bets calificadas seguras (Under cerrados y líneas ajustadas)
+  const highVarianceMarkets = new Set([
+    "goals_home_under_15",
+    "goals_home_under_25",
+    "goals_away_under_15",
+    "goals_away_under_25",
+    "goals_under_15",
+    "goals_under_25",
+    "corners_over_95",
+    "corners_over_105",
+    "corners_under_75",
+    "corners_under_85",
+  ]);
+
+  if (riskTier === "ultra") {
+    // En Ultra Seguro: solo líneas de máxima solidez (+0.5 goles, -3.5/-4.5 goles, Hándicaps +1.5/+2.5, +0.5 tarjetas)
+    const ultraSafeLines = new Set([
+      "goals_over_05",
+      "goals_over_15",
+      "goals_under_35",
+      "goals_under_45",
+      "goals_home_under_35",
+      "goals_away_under_35",
+      "goals_home_over_05",
+      "goals_away_over_05",
+      "goals_handicap_home_plus_15",
+      "goals_handicap_home_plus_25",
+      "goals_handicap_away_plus_15",
+      "goals_handicap_away_plus_25",
+      "cards_home_over_05",
+      "cards_away_over_05",
+      "cards_over_15",
+      "cards_over_25",
+      "corners_home_over_25",
+      "corners_away_over_25",
+      "corners_over_65",
+      "corners_over_75",
+      "ht_goals_under_25",
+      "goals_1h_under_25",
+    ]);
+    return ultraSafeLines.has(marketId);
+  }
+
+  if (riskTier === "balanced") {
+    return !highVarianceMarkets.has(marketId);
+  }
+
+  return true;
+}
+
+export function scanThreeDayAuditMatches(
+  customReferenceDate?: string,
+  riskTier: HistoryRiskTier = "balanced"
+): ThreeDayAuditSummary {
   const dates = getTargetDates(customReferenceDate);
   const targetDateSet = new Set([dates.yesterday, dates.today, dates.tomorrow]);
 
@@ -630,6 +686,8 @@ export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDay
   const marketReliability = rebuildMarketReliability();
   const lifetime = lifetimeAuditStats(storedSnapshots, storedOutcomes);
   const auditedMatches: ThreeDayAuditedMatch[] = [];
+
+  const minThreshold = riskTier === "ultra" ? 85 : riskTier === "balanced" ? 80 : 75;
 
   for (const match of targetMatches) {
     const homeTeam = getTeamById(match.homeTeamId);
@@ -652,18 +710,14 @@ export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDay
       continue;
     }
 
-    // 2. Extraer TODAS las apuestas que superen el 80% en Probabilidad Y 80% en Confianza Y recomendadas
+    // 2. Extraer apuestas que superen el umbral configurado en Probabilidad y Confianza
     // aplicando la Regla del Colchón de Seguridad Obligatorio (Líneas Amplias)
     const qualifyingEvals = (analysisResult.markets ?? []).filter(
       (m) =>
-        m.confidence >= 80 &&
-        m.statisticalEstimate >= 80 &&
+        m.confidence >= minThreshold &&
+        m.statisticalEstimate >= minThreshold &&
         m.recommendation === "recomendado" &&
-        m.market.id !== "goals_home_under_15" &&
-        m.market.id !== "goals_away_under_15" &&
-        m.market.id !== "goals_under_15" &&
-        m.market.id !== "corners_over_95" &&
-        m.market.id !== "corners_over_105"
+        isSafeBroadLineMarket(m.market.id, riskTier)
     );
 
     // 3. Obtener el resultado real registrado o desde match.statistics
@@ -729,7 +783,10 @@ export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDay
       : outcome
         ? "missing"
         : "current";
-    const sourceSelections = snapshot?.selections ?? currentSelections;
+    const rawSelections = snapshot && snapshot.origin === "pre_match" ? snapshot.selections : currentSelections;
+    const sourceSelections = rawSelections.filter(
+      (s) => isSafeBroadLineMarket(s.marketId, riskTier) && s.probability >= minThreshold && s.confidence >= minThreshold
+    );
     const qualifyingBets = sourceSelections
       .map((selection) => auditedSelection(selection, outcome, Boolean(snapshot)))
       .filter((b) => b.status !== "sin_datos")

@@ -40,7 +40,7 @@ describe("Ticket Generator Service", () => {
 
     expect(summary).toBeDefined();
     expect(match).toBeDefined();
-    const analysis = generateAnalysis(defaultAnalysisConfig(match!.homeTeamId, match!.awayTeamId, 10));
+    const analysis = generateAnalysis(defaultAnalysisConfig(match!.homeTeamId, match!.awayTeamId, 15));
     for (const ticketMarket of [summary!.homeWin, summary!.draw, summary!.awayWin, summary!.doubleChanceHome, summary!.doubleChanceAway]) {
       const market = analysis.markets.find((item) => item.id === ticketMarket.id);
       expect(market).toBeDefined();

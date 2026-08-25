@@ -10,7 +10,7 @@ describe("strict match package prompt", () => {
     expect(prompt).toContain('statsStatus: "provided"');
     expect(prompt).toContain("NO generes JSON parcial");
     expect(prompt).toContain("NO PUEDO GENERAR EL JSON");
-    expect(prompt).toContain("exactamente 5 registros historicos completos");
+    expect(prompt).toContain("exactamente 15 registros historicos completos");
     expect(prompt).toContain("ARCHIVO descargable con extension .json");
     expect(prompt).toContain('valor exacto de "id" mas ".json"');
     expect(prompt).toContain("No pegues el JSON como texto en el chat");

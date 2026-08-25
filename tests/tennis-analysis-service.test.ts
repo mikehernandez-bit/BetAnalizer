@@ -39,6 +39,8 @@ import {
   KOSTYUK_CINCINNATI_HISTORY,
   KOUAME_CANCUN_HISTORY,
   KWON_QUEBEC_HISTORY,
+  KWON_USOPEN_HISTORY,
+  LAJOVIC_USOPEN_HISTORY,
   LLOYD_HARRIS_CANCUN_HISTORY,
   MAESTRELLI_QUEBEC_HISTORY,
   MAGADAN_CANCUN_HISTORY,
@@ -1366,6 +1368,22 @@ describe("tennis analysis service", () => {
         expect(analysis.markets.length).toBeGreaterThan(0);
       }).not.toThrow();
     }
+  });
+
+  it("preserves the 20+20 Soon Woo Kwon and Dusan Lajovic screenshot rows", () => {
+    expect(KWON_USOPEN_HISTORY).toHaveLength(20);
+    expect(LAJOVIC_USOPEN_HISTORY).toHaveLength(20);
+    expect(KWON_USOPEN_HISTORY.every((match) => match.date < "2026-08-25")).toBe(true);
+    expect(LAJOVIC_USOPEN_HISTORY.every((match) => match.date < "2026-08-25")).toBe(true);
+
+    const event = tennisEvents.find((item) => item.id === "atp-us-open-2026-kwon-lajovic");
+    expect(event).toBeDefined();
+    if (!event) return;
+
+    const analysis = analyzeTennisMatch(event.input);
+    expect(analysis.profiles.player1.matchesUsed).toBe(18); // 18 completed + 1 ret + 1 WO
+    expect(analysis.profiles.player2.matchesUsed).toBe(19); // 19 completed + 1 ret
+    expect(analysis.markets.length).toBeGreaterThanOrEqual(15);
   });
 
   it("uses all 20 matches and adds common-opponent and pre-match H2H evidence", () => {
