@@ -565,6 +565,8 @@ export interface TicketWinnerPrediction {
   drawProbability: number;
   awayWinProbability: number;
   correct?: boolean;
+  noBet?: boolean;
+  recommendation?: "recomendado" | "evitar";
 }
 
 /** Un encuentro perteneciente a un ticket guardado. */

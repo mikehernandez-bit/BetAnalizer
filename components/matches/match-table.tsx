@@ -40,7 +40,7 @@ export function MatchTable({ matches }: { matches: Match[] }) {
               const away = getTeamById(match.awayTeamId);
               const competition = getCompetitionById(match.competitionId);
               if (!home || !away) return null;
-              const audit = checkMatchDataAudit(home.id, away.id, 10);
+              const audit = checkMatchDataAudit(home.id, away.id, 15);
               return (
                 <TableRow key={match.id}>
                   <TableCell className="whitespace-nowrap text-muted-foreground">

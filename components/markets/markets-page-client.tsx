@@ -21,7 +21,7 @@ export function MarketsPageClient({ initialHomeId, initialAwayId, initialMarketI
   const [awayId, setAwayId] = React.useState(initialAwayId);
 
   const markets = React.useMemo(() => {
-    const analysis = generateAnalysis(defaultAnalysisConfig(homeId, awayId, 10));
+    const analysis = generateAnalysis(defaultAnalysisConfig(homeId, awayId, 15));
     return analysis.markets;
   }, [homeId, awayId]);
 

@@ -181,8 +181,8 @@ export function generateBetTicket(options: TicketGeneratorOptions): GeneratedTic
     }
 
     // El ticket consume exactamente el mismo AnalysisResult que la pantalla de
-    // Mercados: muestra de 10, amistosos excluidos y señales H2H/rivales comunes.
-    const analysis = generateAnalysis(defaultAnalysisConfig(homeTeam.id, awayTeam.id, 10));
+    // Mercados: muestra de 15, amistosos excluidos y señales H2H/rivales comunes.
+    const analysis = generateAnalysis(defaultAnalysisConfig(homeTeam.id, awayTeam.id, 15));
     const homeRecords = analysis.homeForm.matches;
     const awayRecords = analysis.awayForm.matches;
 
@@ -210,6 +210,12 @@ export function generateBetTicket(options: TicketGeneratorOptions): GeneratedTic
       continue;
     }
 
+    const homeWinEval = analysis.markets.find((m) => m.market.id === "result_home_win");
+    const awayWinEval = analysis.markets.find((m) => m.market.id === "result_away_win");
+    const homeWinProb = homeWinEval?.statisticalEstimate ?? 33;
+    const awayWinProb = awayWinEval?.statisticalEstimate ?? 33;
+    const isLopsided = Math.abs(homeWinProb - awayWinProb) > 25;
+
     // Solo filtra la lista ya calculada por el análisis común; no recalcula el
     // mercado con otro contexto ni deja pasar mercados marcados como "evitar".
     const matchingMarkets = analysis.markets.filter((m) => {
@@ -219,6 +225,11 @@ export function generateBetTicket(options: TicketGeneratorOptions): GeneratedTic
       if (m.recommendation !== "recomendado") {
         return false;
       }
+      // 1. Descarte de Ambos Marcan (BTTS) en partidos con amplio favorito
+      if (m.market.id.startsWith("btts") && isLopsided) {
+        return false;
+      }
+      // 2. Filtro estricto de contradicciones o avisos de datos/volatilidad
       const hasDataWarning = m.contradictions.some((c) => {
         const lower = c.toLowerCase();
         return (
@@ -227,12 +238,40 @@ export function generateBetTicket(options: TicketGeneratorOptions): GeneratedTic
           lower.includes("no apostar") ||
           lower.includes("muestra reducida") ||
           lower.includes("sin datos") ||
-          lower.includes("volatilidad alta")
+          lower.includes("volatilidad alta") ||
+          lower.includes("inconsistencia") ||
+          lower.includes("riesgo elevado")
         );
       });
       if (hasDataWarning) {
         return false;
       }
+      // 3. Confirmación de racha reciente si hay evidencia disponible
+      if (m.evidence?.series) {
+        for (const s of m.evidence.series) {
+          if (s.matches && s.matches.length >= 5) {
+            const recent5 = s.matches.slice(0, 5);
+            const recentHits = recent5.filter((rm) => rm.fulfilled).length;
+            // Si en los últimos 5 partidos se cumplió menos del 60% (menos de 3 de 5), se descarta por caída de forma
+            if (recentHits < 3) {
+              return false;
+            }
+          }
+        }
+      }
+
+      // 4. Regla del Colchón de Seguridad Obligatorio (Líneas Amplias):
+      // Veto a líneas ajustadas individuales de menos de 1.5 goles (Under 1.5 individual) y Under 1.5 total
+      if (
+        m.market.id === "goals_home_under_15" ||
+        m.market.id === "goals_away_under_15" ||
+        m.market.id === "goals_under_15" ||
+        m.market.id === "corners_over_95" ||
+        m.market.id === "corners_over_105"
+      ) {
+        return false;
+      }
+
       return true;
     });
 

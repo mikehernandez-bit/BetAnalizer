@@ -18,7 +18,7 @@ export function getDashboardSummary(): DashboardSummary {
     const away = getTeamById(match.awayTeamId);
     if (!home || !away) return;
     try {
-      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
+      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 15));
       strongPatterns += analysis.crossPatterns.filter((c) => c.strength === "fuerte" || c.strength === "muy_fuerte").length;
       valueBets += analysis.markets.filter((m) => m.valueLevel === "valor_alto" || m.valueLevel === "valor_moderado").length;
     } catch {
@@ -57,7 +57,7 @@ export function getTopHighlightMarkets(limit = 4): HighlightMarket[] {
     const away = getTeamById(match.awayTeamId);
     if (!home || !away) return;
     try {
-      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
+      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 15));
       const best = pickHeadlineMarket(analysis.markets);
       if (!best) return;
       highlights.push({
@@ -144,7 +144,7 @@ export function getPatternsByCategoryChart() {
     const away = getTeamById(match.awayTeamId);
     if (!home || !away) return;
     try {
-      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 10));
+      const analysis = generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 15));
       [...analysis.homePatterns, ...analysis.awayPatterns].forEach((p) => {
         counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
       });

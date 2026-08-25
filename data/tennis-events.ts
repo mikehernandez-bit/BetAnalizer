@@ -2352,6 +2352,114 @@ export const MARTINEZ_KINGSTON_HISTORY: TennisHistoryMatch[] = [
   match("2026-05-13", "ATP Challenger Turin", "clay", "Roberto Bautista-Agut", [set(3, 6), set(1, 6)], "completed", false, "opponent"),
 ];
 
+/**
+ * Transcripción de las 20 filas de las capturas de Sara Bežlek (Semifinal).
+ * Todos los sets están orientados a Bežlek, incluso cuando aparece abajo.
+ */
+export const BEJLEK_CINCINNATI_SF_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-21", "USA Cincinnati", "hard", "Madison Keis", [set(3, 6), set(6, 4), set(7, 6, 7, 5)], "completed", true, "player"),
+  match("2026-08-19", "USA Cincinnati", "hard", "Arina Sabalenka", [set(7, 6, 9, 7), set(6, 4)], "completed", false, "player"),
+  match("2026-08-18", "USA Cincinnati", "hard", "Ekaterina Aleksandrova", [set(4, 6), set(6, 1), set(6, 2)], "completed", true, "player"),
+  match("2026-08-16", "USA Cincinnati", "hard", "Barbora Krežcikova", [set(7, 6, 7, 5), set(6, 4)], "completed", false, "player"),
+  match("2026-08-14", "USA Cincinnati", "hard", "Karolina Pliskova", [set(6, 0), set(6, 2)], "completed", true, "player"),
+  match("2026-08-04", "Canada Toronto", "hard", "Iga Swiatek", [set(0, 6), set(3, 6)], "completed", true, "opponent"),
+  match("2026-08-02", "Canada Toronto", "hard", "Ksiu Wang", [set(6, 3), set(4, 6), set(7, 5)], "completed", false, "player"),
+  match("2026-07-24", "Czech Republic", "clay", "Lilli Tagger", [set(3, 6), set(4, 6)], "completed", false, "opponent"),
+  match("2026-07-23", "Czech Republic", "clay", "Maria Timofiva", [set(6, 1), set(6, 1)], "completed", false, "player"),
+  match("2026-07-21", "Czech Republic", "clay", "Anna Blinkova", [set(7, 6, 11, 9), set(3, 6), set(6, 1)], "completed", false, "player"),
+  match("2026-07-17", "WTA Athens", "clay", "clara Tauson", [set(2, 6), set(3, 6)], "completed", false, "opponent"),
+  match("2026-07-15", "WTA Athens", "clay", "Lilli Tagger", [set(6, 2), set(6, 2)], "completed", false, "player"),
+  match("2026-07-13", "WTA Athens", "clay", "Viktoria Morvajöva", [set(6, 0), set(7, 5)], "completed", false, "player"),
+  match("2026-06-30", "Wimbledon", "grass", "Sorana Cirsti", [set(1, 6), set(6, 7, 6, 8)], "completed", false, "opponent"),
+  match("2026-06-24", "Great Britain", "grass", "Zeinep Sonmez", [], "walkover", false, "opponent"),
+  match("2026-06-23", "Great Britain", "grass", "Laura Siegemund", [set(3, 6), set(7, 6, 7, 2), set(7, 6, 7, 3)], "completed", true, "player"),
+  match("2026-06-16", "Great Britain", "grass", "Karolina Pliskova", [set(6, 2), set(6, 7, 3, 7), set(2, 6)], "completed", true, "opponent"),
+  match("2026-06-09", "WTA S-Hertogenbosch", "grass", "Dajana Jastremska", [set(1, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-05-27", "Roland-Garros", "clay", "Iga Swiatek", [set(2, 6), set(3, 6)], "completed", true, "opponent"),
+  match("2026-05-24", "Roland-Garros", "clay", "Sloane Stefens", [set(6, 3), set(6, 2)], "completed", true, "player"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Kori Gauff (Semifinal).
+ * Todos los sets están orientados a Gauff, incluso cuando aparece abajo.
+ */
+export const GAUFF_CINCINNATI_SF_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-21", "USA Cincinnati", "hard", "Marta Kostjuk", [set(6, 2), set(6, 2)], "completed", true, "player"),
+  match("2026-08-19", "USA Cincinnati", "hard", "Marie Bauzkova", [set(6, 3), set(6, 2)], "completed", true, "player"),
+  match("2026-08-18", "USA Cincinnati", "hard", "Ann Li", [set(6, 1), set(7, 6, 7, 3)], "completed", true, "player"),
+  match("2026-08-16", "USA Cincinnati", "hard", "Ludmilla Samsonova", [set(2, 6), set(6, 4), set(6, 1)], "completed", true, "player"),
+  match("2026-08-12", "Canada Toronto", "hard", "Elena Ribakina", [set(7, 5), set(2, 6), set(2, 6)], "completed", true, "opponent"),
+  match("2026-08-11", "Canada Toronto", "hard", "Belinda Bencic", [], "walkover", false, "player"),
+  match("2026-08-09", "Canada Toronto", "hard", "Alina Korniva", [set(6, 3), set(6, 1)], "completed", false, "player"),
+  match("2026-08-07", "Canada Toronto", "hard", "Maria Sakkari", [set(6, 1), set(6, 4)], "completed", false, "player"),
+  match("2026-08-05", "Canada Toronto", "hard", "Kaila Dai", [set(6, 2), set(7, 5)], "completed", false, "player"),
+  match("2026-07-09", "Wimbledon", "grass", "Karolina Mutšova", [set(2, 6), set(6, 1), set(6, 7, 10, 12)], "completed", false, "opponent"),
+  match("2026-07-07", "Wimbledon", "grass", "Žessika Pegula", [set(4, 6), set(6, 3), set(6, 3)], "completed", false, "player"),
+  match("2026-07-05", "Wimbledon", "grass", "Belinda Bencic", [set(4, 6), set(6, 3), set(6, 4)], "completed", false, "player"),
+  match("2026-07-03", "Wimbledon", "grass", "claire", [set(6, 3), set(6, 7, 5, 7), set(6, 2)], "completed", false, "player"),
+  match("2026-07-01", "Wimbledon", "grass", "Solana Sierra", [set(6, 3), set(3, 6), set(7, 6, 10, 7)], "completed", false, "player"),
+  match("2026-06-29", "Wimbledon", "grass", "Tamara Korpatstš", [set(6, 2), set(6, 1)], "completed", false, "player"),
+  match("2026-06-17", "Berlin", "grass", "Paula Badosa", [set(6, 1), set(3, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-05-30", "Roland-Garros", "clay", "Anastasia Potapova", [set(6, 4), set(6, 7, 1, 7), set(4, 6)], "completed", true, "opponent"),
+  match("2026-05-28", "Roland-Garros", "clay", "Majar Šerif", [set(6, 3), set(6, 2)], "completed", true, "player"),
+  match("2026-05-26", "Roland-Garros", "clay", "Tailor Townsend", [set(6, 4), set(6, 0)], "completed", true, "player"),
+  match("2026-05-16", "ROM", "clay", "Elina Svitolina", [set(4, 6), set(7, 6, 7, 3), set(2, 6)], "completed", true, "opponent"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Rinki Hižikata.
+ * Todos los sets están orientados a Hižikata, incluso cuando aparece abajo.
+ */
+export const HIJIKATA_WINSTON_SALEM_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-17", "USA Cincinnati", "hard", "Žakub Mensik", [set(3, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-08-15", "USA Cincinnati", "hard", "Luciano Darderi", [set(6, 4), set(6, 2)], "completed", false, "player"),
+  match("2026-08-13", "USA Cincinnati", "hard", "Gael Monfils", [set(2, 6), set(7, 6, 7, 5), set(6, 3)], "completed", true, "player"),
+  match("2026-08-02", "Canada Montreal", "hard", "Žaume Antoni Munar clar", [set(6, 7), set(3, 6)], "completed", false, "opponent"),
+  match("2026-07-28", "Mexico Los Cabos", "hard", "Denis Sapovalov", [set(6, 2), set(3, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-06-29", "Wimbledon", "grass", "Žesper De Žong", [set(6, 7, 4, 7), set(6, 3), set(7, 5), set(4, 6), set(3, 6)], "completed", false, "opponent"),
+  match("2026-06-19", "Great Britain", "grass", "Ugo Humbert", [set(1, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-06-18", "Great Britain", "grass", "Žiri Lehecka", [set(4, 6), set(7, 5), set(7, 6, 9, 7)], "completed", true, "player"),
+  match("2026-06-16", "Great Britain", "grass", "Aležandro Tabilo", [set(6, 2), set(6, 4)], "completed", true, "player"),
+  match("2026-06-14", "Great Britain", "grass", "Markos Giron", [set(7, 5), set(6, 7, 4, 7), set(6, 1)], "completed", true, "player"),
+  match("2026-06-13", "Great Britain", "grass", "Dino Prizmic", [set(4, 6), set(6, 4), set(7, 5)], "completed", false, "player"),
+  match("2026-06-11", "Stuttgart", "grass", "Francis Tiafoe", [set(4, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-06-09", "Stuttgart", "grass", "Tom Gentzš", [set(6, 7, 7, 9), set(7, 6, 7, 2), set(6, 3)], "completed", false, "player"),
+  match("2026-06-05", "Surbiton", "grass", "Arsur Feri", [set(6, 7, 7, 9), set(3, 6)], "completed", false, "opponent"),
+  match("2026-06-04", "Surbiton", "grass", "Mackenzie Mcdonald", [set(6, 3), set(7, 6, 7, 5)], "completed", false, "player"),
+  match("2026-06-02", "Surbiton", "grass", "Žakob Firnlei", [set(6, 1), set(7, 6, 7, 3)], "completed", false, "player"),
+  match("2026-05-25", "Roland-Garros", "clay", "Tommi Paul", [set(6, 4), set(3, 6), set(5, 7), set(4, 6)], "completed", true, "opponent"),
+  match("2026-05-18", "ATP Hamburg", "clay", "Daniel Altmaier", [set(5, 7), set(2, 6)], "completed", false, "opponent"),
+  match("2026-05-17", "ATP Hamburg", "clay", "Henri Svitsire", [set(6, 7, 4, 7), set(7, 5), set(7, 6, 7, 5)], "completed", true, "player"),
+  match("2026-05-16", "ATP Hamburg", "clay", "Taro Daniel", [set(6, 3), set(6, 7, 3, 7), set(6, 2)], "completed", true, "player"),
+];
+
+/**
+ * Transcripción de las 20 filas de las capturas de Darwin Blantš.
+ * Todos los sets están orientados a Blantš, incluso cuando aparece abajo.
+ */
+export const BLANCH_WINSTON_SALEM_HISTORY: TennisHistoryMatch[] = [
+  match("2026-08-19", "USA Cincinnati", "hard", "Lloid Harris", [set(4, 6), set(2, 6)], "completed", true, "opponent"),
+  match("2026-08-12", "USA Cincinnati", "hard", "Aleksandar Vukic", [set(3, 6), set(6, 7, 4, 7)], "completed", false, "opponent"),
+  match("2026-07-27", "Mexico Los Cabos", "hard", "Tšak Lam Koleman Wong", [set(3, 6), set(4, 6)], "completed", false, "opponent"),
+  match("2026-07-21", "USA", "hard", "Mark Lažal", [set(4, 6), set(7, 5), set(4, 6)], "completed", false, "opponent"),
+  match("2026-07-14", "USA", "hard", "Bernard Tomic", [set(4, 6), set(7, 6, 9, 7), set(3, 6)], "completed", true, "opponent"),
+  match("2026-07-10", "Great Britain", "grass", "Žakob Firnlei", [set(3, 6), set(3, 6)], "completed", true, "opponent"),
+  match("2026-07-09", "Great Britain", "grass", "Garrett Žohns", [set(5, 7), set(6, 3), set(6, 3)], "completed", false, "player"),
+  match("2026-07-08", "Great Britain", "grass", "Murfi Kassüan", [set(6, 4), set(1, 6), set(6, 3)], "completed", false, "player"),
+  match("2026-06-24", "Wimbledon", "grass", "Dane Swini", [set(6, 2), set(6, 7, 7, 9), set(0, 4)], "retired", false, "opponent"),
+  match("2026-06-22", "Wimbledon", "grass", "Filip cristian Žianu", [set(7, 6, 7, 1), set(6, 4)], "completed", true, "player"),
+  match("2026-06-15", "Great Britain", "grass", "Žizhen Žang", [set(4, 6), set(7, 6, 10, 8), set(4, 6)], "completed", true, "opponent"),
+  match("2026-06-13", "Great Britain", "grass", "Žakob Firnlei", [set(6, 7, 4, 7), set(6, 7, 6, 8)], "completed", true, "opponent"),
+  match("2026-06-12", "Great Britain", "grass", "Henrivitse Rotša", [set(7, 6, 7, 4), set(1, 6), set(6, 3)], "completed", false, "player"),
+  match("2026-06-09", "Great Britain", "grass", "Tšristofer O'Konnell", [set(7, 6, 7, 4), set(4, 6), set(6, 3)], "completed", true, "player"),
+  match("2026-05-22", "Roland-Garros", "clay", "Luka Pavlovic", [set(2, 6), set(4, 6)], "completed", true, "opponent"),
+  match("2026-05-20", "Roland-Garros", "clay", "Tristan Šulkate", [set(6, 4), set(6, 4)], "completed", false, "player"),
+  match("2026-05-19", "Roland-Garros", "clay", "Timofei Skatov", [set(6, 1), set(6, 2)], "completed", true, "player"),
+  match("2026-05-11", "Great Britain", "clay", "Zack Pinnington Žüans", [set(3, 6), set(7, 6, 7, 4), set(5, 7)], "completed", true, "opponent"),
+  match("2026-05-02", "ATP Challenger", "clay", "Žaime Faria", [set(3, 6), set(2, 6)], "completed", false, "opponent"),
+  match("2026-05-01", "ATP Challenger", "clay", "Matsew William Donald", [set(6, 3), set(6, 4)], "completed", true, "player"),
+];
+
 const RAW_TENNIS_EVENTS: TennisStoredEvent[] = [
   {
     id: "atp-cincinnati-2026-rublev-borges",
@@ -3216,6 +3324,48 @@ const RAW_TENNIS_EVENTS: TennisStoredEvent[] = [
       "https://scores24.live/es/tennis/l-atp-challenger-kingston-jamaica-men-singles",
       "https://scores24.live/es/tennis/t-prado-angelo-juan-carlos-1",
       "https://scores24.live/es/tennis/t-martinez-portero-pedro",
+    ],
+    note: "Transcripción exacta de 20 partidos oficiales por jugador.",
+  },
+  {
+    id: "wta-cincinnati-2026-bejlek-gauff",
+    status: "scheduled",
+    input: {
+      id: "wta-cincinnati-2026-bejlek-gauff",
+      tournament: "WTA Cincinnati, EEUU Indiv. Fem.",
+      date: "2026-08-22",
+      time: "20:15",
+      round: "Semifinal",
+      surface: "hard",
+      bestOf: 3,
+      player1: { name: "Sara Bežlek", matches: BEJLEK_CINCINNATI_SF_HISTORY },
+      player2: { name: "Kori Gauff", matches: GAUFF_CINCINNATI_SF_HISTORY },
+    },
+    sourceUrls: [
+      "https://scores24.live/es/tennis/l-wta-wta-cincinnati-usa-women-singles",
+      "https://scores24.live/es/tennis/t-bejlek-sara-1",
+      "https://scores24.live/es/tennis/t-gauff-cori",
+    ],
+    note: "Transcripción exacta de 20 partidos oficiales por jugadora.",
+  },
+  {
+    id: "atp-winston-salem-2026-hijikata-blanch",
+    status: "scheduled",
+    input: {
+      id: "atp-winston-salem-2026-hijikata-blanch",
+      tournament: "ATP Winston-Salem, EEUU Indiv. Masc.",
+      date: "2026-08-23",
+      time: "19:10",
+      round: "1/32",
+      surface: "hard",
+      bestOf: 3,
+      player1: { name: "Rinki Hižikata", matches: HIJIKATA_WINSTON_SALEM_HISTORY },
+      player2: { name: "Darwin Blantš", matches: BLANCH_WINSTON_SALEM_HISTORY },
+    },
+    sourceUrls: [
+      "https://scores24.live/es/tennis/l-atp-atp-winston-salem-usa-men-singles",
+      "https://scores24.live/es/tennis/t-hijikata-rinky",
+      "https://scores24.live/es/tennis/t-blanch-darwin-2",
     ],
     note: "Transcripción exacta de 20 partidos oficiales por jugador.",
   },

@@ -330,17 +330,44 @@ function recommendation(
     return "evitar";
   }
 
-  // Predecir que un jugador NO gana ningún set ("No") tiene alta varianza en tenis; solo "Sí" con solidez califica
-  if (marketId && (marketId === "player-1-wins-set" || marketId === "player-2-wins-set")) {
-    if (selection === "No") return "evitar";
-    if (probability >= 75 && confidence >= 68) return "fuerte";
-    if (probability >= 65 && confidence >= 62) return "moderada";
+  // match-total-games (Over/Under fijo de juegos) tiene alta volatilidad empírica; se desaconseja
+  if (marketId === "match-total-games") {
     return "evitar";
   }
 
-  if (marketId === "match-total-games") {
-    if (probability >= 70 && confidence >= 70) return "fuerte";
-    if (probability >= 64 && confidence >= 64) return "moderada";
+  // Predecir ganador de partido (match-winner): solo califica con ventaja sólida para evitar partidos trampa
+  if (marketId === "match-winner") {
+    if (probability >= 65 && confidence >= 65) return "fuerte";
+    if (probability >= 60 && confidence >= 62) return "moderada";
+    return "evitar";
+  }
+
+  // Predecir que un jugador NO gana ningún set ("No") tiene alta varianza en tenis; solo "Sí" con solidez califica
+  if (marketId && (marketId === "player-1-wins-set" || marketId === "player-2-wins-set")) {
+    if (selection === "No") return "evitar";
+    if (probability >= 72 && confidence >= 65) return "fuerte";
+    if (probability >= 64 && confidence >= 60) return "moderada";
+    return "evitar";
+  }
+
+  // Hándicap del partido / sets (mercado de mayor fiabilidad histórica: 80% de acierto)
+  if (marketId === "match-handicap") {
+    if (probability >= 65 && confidence >= 60) return "fuerte";
+    if (probability >= 58 && confidence >= 55) return "moderada";
+    return "evitar";
+  }
+
+  // Ambos ganan set / Total de sets
+  if (marketId === "both-win-set" || marketId === "total-sets") {
+    if (probability >= 68 && confidence >= 65) return "fuerte";
+    if (probability >= 60 && confidence >= 60) return "moderada";
+    return "evitar";
+  }
+
+  // Hándicap de juegos
+  if (marketId === "total-games-handicap") {
+    if (probability >= 70 && confidence >= 66) return "fuerte";
+    if (probability >= 62 && confidence >= 60) return "moderada";
     return "evitar";
   }
 

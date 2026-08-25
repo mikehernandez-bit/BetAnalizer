@@ -164,12 +164,12 @@ export function computeFiveParameters(
   const awayVenueTotal = awayVenueRecords.length || 1;
   const awayVenuePct = Math.round((awayVenueHits / awayVenueTotal) * 100);
 
-  // 3. Historial Total Equipo 1 (los 10 partidos)
+  // 3. Historial Total Equipo 1 (los 15 partidos)
   const homeTotalHits = homeRecords.filter(homePredicate).length;
   const homeTotalCount = homeRecords.length || 1;
   const homeTotalPct = Math.round((homeTotalHits / homeTotalCount) * 100);
 
-  // 4. Historial Total Equipo 2 (los 10 partidos)
+  // 4. Historial Total Equipo 2 (los 15 partidos)
   const awayTotalHits = awayRecords.filter(awayPredicate).length;
   const awayTotalCount = awayRecords.length || 1;
   const awayTotalPct = Math.round((awayTotalHits / awayTotalCount) * 100);

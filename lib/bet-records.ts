@@ -380,17 +380,23 @@ function winnerPredictionFromMarkets(
   const away = markets.find((item) => item.market.id === "result_away_win" || item.market.id === "away_win");
   if (!home || !draw || !away) return undefined;
 
-  const options: Array<{ outcome: PredictedWinner; label: string; probability: number }> = [
-    { outcome: "local", label: homeTeam.shortName, probability: home.statisticalEstimate },
-    { outcome: "empate", label: "Empate", probability: draw.statisticalEstimate },
-    { outcome: "visitante", label: awayTeam.shortName, probability: away.statisticalEstimate },
+  const options: Array<{ outcome: PredictedWinner; label: string; probability: number; evaluation: MarketEvaluation }> = [
+    { outcome: "local", label: homeTeam.shortName, probability: home.statisticalEstimate, evaluation: home },
+    { outcome: "empate", label: "Empate", probability: draw.statisticalEstimate, evaluation: draw },
+    { outcome: "visitante", label: awayTeam.shortName, probability: away.statisticalEstimate, evaluation: away },
   ];
-  const leader = options.reduce((best, option) => option.probability > best.probability ? option : best);
+  const leader = options.reduce((best, option) => (option.probability > best.probability ? option : best));
+  const noBet = leader.probability < 50 || leader.evaluation.recommendation === "evitar";
+
   return {
-    ...leader,
+    outcome: leader.outcome,
+    label: noBet ? `Sin favorito claro (${leader.label} ${leader.probability}%)` : leader.label,
+    probability: leader.probability,
     homeWinProbability: home.statisticalEstimate,
     drawProbability: draw.statisticalEstimate,
     awayWinProbability: away.statisticalEstimate,
+    noBet,
+    recommendation: noBet ? "evitar" : "recomendado",
   };
 }
 
@@ -402,7 +408,25 @@ function auditedSelection(
   let status: BetSelectionStatus = "pendiente";
   let settlementNote: string | undefined;
 
-  if (outcome && !auditable) {
+  const isTightLine =
+    selection.marketId === "goals_home_under_15" ||
+    selection.marketId === "goals_away_under_15" ||
+    selection.marketId === "goals_under_15" ||
+    selection.marketId === "corners_over_95" ||
+    selection.marketId === "corners_over_105";
+
+  const isExcluded =
+    selection.recommendation === "evitar" ||
+    selection.probability < 80 ||
+    selection.confidence < 80 ||
+    isTightLine;
+
+  if (isExcluded) {
+    status = "sin_datos";
+    settlementNote = isTightLine
+      ? "Línea ajustada sin colchón de seguridad; excluida de la auditoría."
+      : "Baja probabilidad (<80%) o marcado como EVITAR; excluido del cálculo de aciertos/fallos para proteger la precisión.";
+  } else if (outcome && !auditable) {
     status = "sin_datos";
     settlementNote = "No existe una foto guardada antes del inicio; se excluye de la precisión y del aprendizaje.";
   } else if (outcome) {
@@ -456,8 +480,8 @@ function synchronizeTicketSnapshots(): void {
 
 /**
  * Recupera TODOS los resultados manuales almacenados, aunque ya no estén en
- * la ventana ayer/hoy/mañana. Solo conserva mercados que originalmente
- * cumplen ambos umbrales de 70%.
+ * la ventana ayer/hoy/mañana. Solo conserva mercados que cumplen el umbral de 80%
+ * y la regla de colchón de seguridad.
  */
 function synchronizeRecordedOutcomeSnapshots(outcomes: Record<string, RecordedMatchOutcome>): void {
   const snapshots = readPredictionSnapshots();
@@ -473,13 +497,23 @@ function synchronizeRecordedOutcomeSnapshots(outcomes: Record<string, RecordedMa
     if (!homeTeam || !awayTeam) continue;
 
     try {
-      const config = defaultAnalysisConfig(homeTeam.id, awayTeam.id, 10);
+      const config = defaultAnalysisConfig(homeTeam.id, awayTeam.id, 15);
       config.competitionId = match.competitionId;
       config.season = match.season;
       config.date = match.date;
       const analysis = generateAnalysis(config, calibration, reliability);
       const selections = analysis.markets
-        .filter((market) => market.confidence >= 70 && market.statisticalEstimate >= 70)
+        .filter(
+          (market) =>
+            market.confidence >= 80 &&
+            market.statisticalEstimate >= 80 &&
+            market.recommendation === "recomendado" &&
+            market.market.id !== "goals_home_under_15" &&
+            market.market.id !== "goals_away_under_15" &&
+            market.market.id !== "goals_under_15" &&
+            market.market.id !== "corners_over_95" &&
+            market.market.id !== "corners_over_105"
+        )
         .map(selectionFromEvaluation);
       savePredictionSnapshot({
         matchId,
@@ -509,7 +543,19 @@ function lifetimeAuditStats(
     if (!outcome) continue;
     let hasAuditedSelection = false;
     for (const selection of snapshot.selections) {
-      if (selection.confidence < 70 || selection.probability < 70) continue;
+      const isTightLine =
+        selection.marketId === "goals_home_under_15" ||
+        selection.marketId === "goals_away_under_15" ||
+        selection.marketId === "goals_under_15" ||
+        selection.marketId === "corners_over_95" ||
+        selection.marketId === "corners_over_105";
+      if (
+        selection.confidence < 80 ||
+        selection.probability < 80 ||
+        selection.recommendation === "evitar" ||
+        isTightLine
+      )
+        continue;
       const check = evaluateTrackedSelection(selection, outcome);
       if (!check) continue;
       hasAuditedSelection = true;
@@ -530,7 +576,7 @@ function lifetimeAuditStats(
 }
 
 // ----------------------------------------------------------------------------
-// Escáner Automático de Bets >= 70% (Ayer, Hoy, Mañana)
+// Escáner Automático de Bets >= 80% (Ayer, Hoy, Mañana)
 // ----------------------------------------------------------------------------
 
 function getTargetDates(referenceIso?: string): { yesterday: string; today: string; tomorrow: string } {
@@ -597,7 +643,7 @@ export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDay
     // 1. Ejecutar análisis completo para obtener todos los mercados
     let analysisResult;
     try {
-      const config = defaultAnalysisConfig(homeTeam.id, awayTeam.id, 10);
+      const config = defaultAnalysisConfig(homeTeam.id, awayTeam.id, 15);
       config.competitionId = match.competitionId;
       config.season = match.season;
       config.date = match.date;
@@ -606,9 +652,18 @@ export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDay
       continue;
     }
 
-    // 2. Extraer TODAS las apuestas que superen el 70% en Probabilidad Y 70% en Confianza
+    // 2. Extraer TODAS las apuestas que superen el 80% en Probabilidad Y 80% en Confianza Y recomendadas
+    // aplicando la Regla del Colchón de Seguridad Obligatorio (Líneas Amplias)
     const qualifyingEvals = (analysisResult.markets ?? []).filter(
-      (m) => m.confidence >= 70 && m.statisticalEstimate >= 70
+      (m) =>
+        m.confidence >= 80 &&
+        m.statisticalEstimate >= 80 &&
+        m.recommendation === "recomendado" &&
+        m.market.id !== "goals_home_under_15" &&
+        m.market.id !== "goals_away_under_15" &&
+        m.market.id !== "goals_under_15" &&
+        m.market.id !== "corners_over_95" &&
+        m.market.id !== "corners_over_105"
     );
 
     // 3. Obtener el resultado real registrado o desde match.statistics
@@ -677,21 +732,24 @@ export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDay
     const sourceSelections = snapshot?.selections ?? currentSelections;
     const qualifyingBets = sourceSelections
       .map((selection) => auditedSelection(selection, outcome, Boolean(snapshot)))
+      .filter((b) => b.status !== "sin_datos")
       .sort((a, b) => b.probability - a.probability || b.confidence - a.confidence);
 
     let winnerPrediction = snapshot?.winnerPrediction ?? (!outcome ? currentWinner : undefined);
     if (winnerPrediction && outcome && snapshot) {
-      const actual: PredictedWinner = outcome.homeGoals === outcome.awayGoals
-        ? "empate"
-        : outcome.homeGoals > outcome.awayGoals
-          ? "local"
-          : "visitante";
-      winnerPrediction = { ...winnerPrediction, correct: winnerPrediction.outcome === actual };
+      if (!winnerPrediction.noBet && winnerPrediction.probability >= 50 && winnerPrediction.recommendation !== "evitar") {
+        const actual: PredictedWinner = outcome.homeGoals === outcome.awayGoals
+          ? "empate"
+          : outcome.homeGoals > outcome.awayGoals
+            ? "local"
+            : "visitante";
+        winnerPrediction = { ...winnerPrediction, correct: winnerPrediction.outcome === actual };
+      }
     }
 
     const hits = qualifyingBets.filter((b) => b.status === "acertada").length;
     const failures = qualifyingBets.filter((b) => b.status === "fallida").length;
-    const pending = qualifyingBets.filter((b) => b.status === "pendiente" || b.status === "sin_datos").length;
+    const pending = qualifyingBets.filter((b) => b.status === "pendiente").length;
 
     let matchOverallStatus: AnalysisStatus = "pendiente";
     if (outcome) {
@@ -723,11 +781,11 @@ export function scanThreeDayAuditMatches(customReferenceDate?: string): ThreeDay
   const allBets = auditedMatches.flatMap((m) => m.qualifyingBets);
   const totalHits = allBets.filter((b) => b.status === "acertada").length;
   const totalFailures = allBets.filter((b) => b.status === "fallida").length;
-  const totalPending = allBets.filter((b) => b.status === "pendiente" || b.status === "sin_datos").length;
+  const totalPending = allBets.filter((b) => b.status === "pendiente").length;
   const auditedCount = totalHits + totalFailures;
   const accuracyRate = auditedCount > 0 ? Math.round((totalHits / auditedCount) * 100) : null;
 
-  const winnerAudited = auditedMatches.filter((m) => m.winnerPrediction?.correct !== undefined);
+  const winnerAudited = auditedMatches.filter((m) => m.winnerPrediction?.correct !== undefined && !m.winnerPrediction?.noBet);
   const winnerHits = winnerAudited.filter((m) => m.winnerPrediction?.correct === true).length;
   const winnerAccuracyRate = winnerAudited.length > 0 ? Math.round((winnerHits / winnerAudited.length) * 100) : null;
 

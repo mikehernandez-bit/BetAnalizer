@@ -65,7 +65,7 @@ export function estimateFeaturedStats(homeTeamId: string, awayTeamId: string): M
   const homeStrength = getTeamStrength(homeTeamId) * 1.25 + 0.1;
   const awayStrength = getTeamStrength(awayTeamId);
   const probability = Math.round((homeStrength / (homeStrength + awayStrength)) * 100);
-  const cross = getCrossPatterns(homeTeamId, awayTeamId, 10);
+  const cross = getCrossPatterns(homeTeamId, awayTeamId, 15);
   const strongPatterns = cross.filter((c) => c.strength === "fuerte" || c.strength === "muy_fuerte").length;
 
   const result: MatchQuickStats = { probability, favoredTeamId: probability >= 50 ? homeTeamId : awayTeamId, strongPatterns };

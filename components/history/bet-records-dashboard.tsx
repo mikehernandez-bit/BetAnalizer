@@ -192,8 +192,10 @@ export function BetRecordsDashboard() {
   }
 
   const filteredMatches = summary.matches.filter((m) => {
-    if (dayFilter === "all") return true;
-    return m.dayRelative === dayFilter;
+    if (dayFilter !== "all" && m.dayRelative !== dayFilter) return false;
+    const hasQualifyingBets = m.qualifyingBets && m.qualifyingBets.length > 0;
+    const hasActiveWinner = m.winnerPrediction && !m.winnerPrediction.noBet;
+    return hasQualifyingBets || hasActiveWinner;
   });
 
   const allFilteredBets = filteredMatches.flatMap((m) => m.qualifyingBets);
@@ -235,7 +237,7 @@ export function BetRecordsDashboard() {
       {/* Metric Cards */}
       <div className="adaptive-stat-grid grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
         <StatCard icon={Layers} label="Partidos en Ventana" value={String(filteredMatches.length)} />
-        <StatCard icon={Target} label="Bets $\ge 70\%$ Calificadas" value={String(allFilteredBets.length)} />
+        <StatCard icon={Target} label="Bets ≥80% Calificadas" value={String(allFilteredBets.length)} />
         <StatCard icon={CheckCircle2} label="Bets Acertadas" value={String(tabHits)} accent="green" />
         <StatCard icon={XCircle} label="Bets Fallidas" value={String(tabFailures)} accent="red" />
         <StatCard
@@ -260,12 +262,12 @@ export function BetRecordsDashboard() {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <StatCard icon={Layers} label="Partidos históricos auditados" value={String(summary.stats.lifetimeMatches)} />
-        <StatCard icon={Target} label="Bets históricas ≥70%" value={String(summary.stats.lifetimeAuditedBets)} />
+        <StatCard icon={Target} label="Bets históricas ≥80%" value={String(summary.stats.lifetimeAuditedBets)} />
         <StatCard icon={CheckCircle2} label="Aciertos históricos" value={String(summary.stats.lifetimeHits)} accent="green" />
         <StatCard icon={XCircle} label="Fallos históricos" value={String(summary.stats.lifetimeFailures)} accent="red" />
         <StatCard
           icon={Percent}
-          label="Precisión histórica ≥70%"
+          label="Precisión histórica ≥80%"
           value={summary.stats.lifetimeAccuracyRate !== null ? `${summary.stats.lifetimeAccuracyRate}%` : "Sin muestra"}
           accent={summary.stats.lifetimeAccuracyRate !== null && summary.stats.lifetimeAccuracyRate >= 70 ? "green" : "yellow"}
         />
@@ -335,8 +337,8 @@ export function BetRecordsDashboard() {
       {filteredMatches.length === 0 ? (
         <EmptyState
           icon={Layers}
-          title="No hay partidos con bets $\ge 70\%$ en este filtro"
-          description="Los partidos de este día no superaron el umbral estricto del 70% en Probabilidad y Confianza en el catálogo de mercados."
+          title="No hay partidos con bets ≥80% en este filtro"
+          description="Los partidos de este día no superaron el umbral estricto del 80% en Probabilidad y Confianza en el catálogo de mercados."
         />
       ) : (
         <div className="space-y-6">
@@ -407,7 +409,7 @@ export function BetRecordsDashboard() {
                       <div className="flex items-center gap-2">
                         <Trophy className="h-4 w-4 text-cyan-400" />
                         <span className="font-extrabold text-cyan-200">
-                          Pronóstico 1X2 Modelo: {winner.label} ({winner.probability}%)
+                          Pronóstico 1X2 Modelo: {winner.noBet ? winner.label : `${winner.label} (${winner.probability}%)`}
                         </span>
                         <Badge variant="outline" className="border-cyan-500/30 text-[9px] text-cyan-300">
                           {match.predictionStatus === "locked"
@@ -423,7 +425,11 @@ export function BetRecordsDashboard() {
                         <span>X: {winner.drawProbability}%</span>
                         <span className="text-slate-600">·</span>
                         <span>2: {winner.awayWinProbability}%</span>
-                        {winner.correct !== undefined && (
+                        {winner.noBet ? (
+                          <Badge className="ml-2 text-[10px] font-bold border-amber-500/40 bg-amber-500/20 text-amber-300">
+                            No apostar 1X2
+                          </Badge>
+                        ) : winner.correct !== undefined ? (
                           <Badge
                             className={cn(
                               "ml-2 text-[10px] font-bold",
@@ -434,7 +440,7 @@ export function BetRecordsDashboard() {
                           >
                             {winner.correct ? "Acertó 1X2" : "Falló 1X2"}
                           </Badge>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   )}
@@ -452,67 +458,69 @@ export function BetRecordsDashboard() {
                   )}
 
                   {/* Qualifying Bets Grid */}
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
-                      <p className="font-bold text-slate-300 flex items-center gap-1.5">
-                        <Award className="h-3.5 w-3.5 text-amber-400" /> Bets Calificadas ($\ge 70\%$ Confianza y Probabilidad):
-                      </p>
-                      <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                        Ordenadas por mayor probabilidad (↓)
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                      {match.qualifyingBets.map((bet) => {
-                        const statusConfig = SELECTION_STATUS[bet.status];
-                        const Icon = statusConfig.icon;
+                  {match.qualifyingBets.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
+                        <p className="font-bold text-slate-300 flex items-center gap-1.5">
+                          <Award className="h-3.5 w-3.5 text-amber-400" /> Bets Calificadas (≥80% Confianza y Probabilidad):
+                        </p>
+                        <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                          Ordenadas por mayor probabilidad (↓)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                        {match.qualifyingBets.map((bet) => {
+                          const statusConfig = SELECTION_STATUS[bet.status];
+                          const Icon = statusConfig.icon;
 
-                        return (
-                          <div
-                            key={bet.id}
-                            className={cn(
-                              "rounded-xl border p-3 transition-all",
-                              bet.status === "acertada"
-                                ? "border-emerald-500/40 bg-emerald-950/15"
-                                : bet.status === "fallida"
-                                ? "border-red-500/40 bg-red-950/15"
-                                : "border-slate-800 bg-slate-950/50"
-                            )}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-extrabold text-white leading-snug">
-                                {bet.marketName}
-                              </span>
-                              <Badge className={cn("text-[10px] shrink-0", statusConfig.badgeClass)}>
-                                <Icon className="h-3 w-3 mr-1" /> {statusConfig.label}
-                              </Badge>
+                          return (
+                            <div
+                              key={bet.id}
+                              className={cn(
+                                "rounded-xl border p-3 transition-all",
+                                bet.status === "acertada"
+                                  ? "border-emerald-500/40 bg-emerald-950/15"
+                                  : bet.status === "fallida"
+                                  ? "border-red-500/40 bg-red-950/15"
+                                  : "border-slate-800 bg-slate-950/50"
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="text-xs font-extrabold text-white leading-snug">
+                                  {bet.marketName}
+                                </span>
+                                <Badge className={cn("text-[10px] shrink-0", statusConfig.badgeClass)}>
+                                  <Icon className="h-3 w-3 mr-1" /> {statusConfig.label}
+                                </Badge>
+                              </div>
+
+                              <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 font-mono">
+                                <span>
+                                  Prob: <strong className="text-amber-400">{bet.probability}%</strong>
+                                </span>
+                                <span>
+                                  Conf: <strong className="text-cyan-400">{bet.confidence}%</strong>
+                                </span>
+                              </div>
+
+                              {bet.settlementNote && (
+                                <p className="mt-1.5 text-[10px] text-emerald-300/90 font-mono bg-slate-950/60 rounded px-1.5 py-0.5">
+                                  Resultado: {bet.settlementNote}
+                                </p>
+                              )}
                             </div>
-
-                            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 font-mono">
-                              <span>
-                                Prob: <strong className="text-amber-400">{bet.probability}%</strong>
-                              </span>
-                              <span>
-                                Conf: <strong className="text-cyan-400">{bet.confidence}%</strong>
-                              </span>
-                            </div>
-
-                            {bet.settlementNote && (
-                              <p className="mt-1.5 text-[10px] text-emerald-300/90 font-mono bg-slate-950/60 rounded px-1.5 py-0.5">
-                                Resultado: {bet.settlementNote}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Match Footer Actions */}
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80 pt-3 text-xs">
                     <span className="text-slate-400">
                       {hasOutcome
                         ? `Marcador registrado (${match.hits} acertadas, ${match.failures} fallidas de ${match.totalBets})`
-                        : `Pendiente de disputa (${match.totalBets} apuestas $\ge 70\%$ listas para auditar)`}
+                        : `Pendiente de disputa (${match.totalBets} apuestas ≥80% listas para auditar)`}
                     </span>
                     <div className="flex items-center gap-2">
                       {hasOutcome && (
@@ -552,7 +560,7 @@ export function BetRecordsDashboard() {
               <FileCheck2 className="h-5 w-5 text-emerald-400" /> Registrar Resultado Oficial
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-400">
-              Ingresa el marcador oficial para {activeMatch?.homeTeam.name} vs {activeMatch?.awayTeam.name}. Se auditarán automáticamente todas las apuestas $\ge 70\%$ del encuentro.
+              Ingresa el marcador oficial para {activeMatch?.homeTeam.name} vs {activeMatch?.awayTeam.name}. Se auditarán automáticamente todas las apuestas ≥80% del encuentro.
             </DialogDescription>
           </DialogHeader>
 

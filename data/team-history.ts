@@ -27371,11 +27371,11 @@ function combineHistories(
 
     let list: TeamMatchRecord[] = [];
 
-    // Si existen 10 partidos oficiales transcritos/importados para este equipo (en imported-analysis-packages.json),
+    // Si existen 15 partidos oficiales transcritos/importados para este equipo (en imported-analysis-packages.json),
     // usarlos con prioridad absoluta sobre los datos built-in estáticos.
-    if (importedList.length >= 10) {
+    if (importedList.length >= 15) {
       list = [...importedList];
-    } else if (builtInList.length >= 10 && importedList.length === 0) {
+    } else if (builtInList.length >= 15 && importedList.length === 0) {
       list = [...builtInList];
     } else {
       const map = new Map<string, TeamMatchRecord>();

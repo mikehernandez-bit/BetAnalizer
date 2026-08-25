@@ -462,7 +462,7 @@ export function formatFootballMatchToClipboard(match: Match): string {
     return `Partido: ${match.homeTeamId} vs ${match.awayTeamId} (${match.date} ${match.time})`;
   }
 
-  const analysisId = buildAnalysisId(home.id, away.id, 10);
+  const analysisId = buildAnalysisId(home.id, away.id, 15);
   const analysis = resolveAnalysisById(analysisId);
   if (analysis) {
     return formatFootballAnalysisToClipboard(analysis);

@@ -14,7 +14,7 @@ import { z } from "zod";
 export const MIN_HISTORY_PER_TEAM = 4;
 /** No es un mínimo de esquema (eso sigue siendo MIN_HISTORY_PER_TEAM): es lo que le exigimos
  *  a la IA en el prompt como estándar, para que el historial tenga suficiente profundidad. */
-export const RECOMMENDED_HISTORY_PER_TEAM = 10;
+export const RECOMMENDED_HISTORY_PER_TEAM = 15;
 
 const DATA_STATUS_VALUES = ["verified", "provided", "estimated", "unavailable"] as const;
 export type DataStatus = (typeof DATA_STATUS_VALUES)[number];

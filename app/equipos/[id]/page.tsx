@@ -19,11 +19,11 @@ export default async function TeamProfilePage(props: PageProps<"/equipos/[id]">)
   const team = getTeamById(id);
   if (!team) notFound();
 
-  const form = getFilteredTeamForm(id, 10);
+  const form = getFilteredTeamForm(id, 15);
   const homeForm = getFilteredTeamForm(id, 20, { onlyVenue: "local" });
   const awayForm = getFilteredTeamForm(id, 20, { onlyVenue: "visitante" });
-  const patterns = getPatternsForTeam(id, 10);
-  const bestMarkets = getTeamBestMarkets(id, 10);
+  const patterns = getPatternsForTeam(id, 15);
+  const bestMarkets = getTeamBestMarkets(id, 15);
   const upcoming = getMatchesByTeam(id)
     .filter((m) => m.status === "scheduled" || m.status === "live")
     .slice(0, 3);

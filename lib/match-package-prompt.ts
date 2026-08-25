@@ -1,8 +1,7 @@
 import { MIN_HISTORY_PER_TEAM, RECOMMENDED_HISTORY_PER_TEAM, type MatchPackage } from "@/lib/validation/match-package";
 
-// El prompt copiable usa una muestra mas corta que el flujo automatico de
-// API-Football. El esquema acepta esta cantidad (minimo: 4).
-const STRICT_PROMPT_HISTORY_PER_TEAM = 5;
+// El prompt copiable exige 15 partidos oficiales reales.
+const STRICT_PROMPT_HISTORY_PER_TEAM = 15;
 
 /**
  * Prompt visible en "Agregar partido". Se mantiene separado del ejemplo para
@@ -705,8 +704,8 @@ export const MATCH_PACKAGE_EXAMPLE: MatchPackage = {
       "Los córners y remates de los partidos marcados como 'estimated' no se publican en la fuente y se estimaron a partir del marcador. El desglose de goles por tiempo y las tarjetas del rival se buscaron activamente en cada partido; se omiten solo en los dos registros donde la fuente consultada no los publicaba (nunca se estimaron, por ser hechos puntuales del partido).",
   },
   historyMeta: {
-    matchesPerTeam: 10,
-    newMatchesPerTeam: 10,
+    matchesPerTeam: 15,
+    newMatchesPerTeam: 15,
     sortOrder: "date_desc",
     verifiedFieldsForNewMatches: ["date", "opponentId", "competitionId", "venue", "result", "goalsFor", "goalsAgainst"],
     estimatedFieldsForNewMatches: [

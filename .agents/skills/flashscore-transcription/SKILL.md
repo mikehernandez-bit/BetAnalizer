@@ -10,7 +10,7 @@ Para garantizar que NINGUNA apuesta o análisis falle por errores de transcripci
 
 1. **Partidos Amistosos**:
    - Queda estrictamente prohibido incluir partidos amistosos (`Club Friendlies`, `Amistoso`, `Club Frien...`).
-   - Cada equipo DEBE tener exactamente **10 partidos 100% oficiales** de Liga o Copa.
+   - Cada equipo DEBE tener exactamente **15 partidos 100% oficiales** de Liga o Copa.
 
 2. **Columnas de Marcador**:
    - **Columna 1**: Resultado Final (FT)

@@ -26,7 +26,7 @@ export function MatchCard({ match }: { match: Match }) {
 
   const stats = estimateFeaturedStats(home.id, away.id);
   const favored = stats.favoredTeamId === home.id ? home : away;
-  const audit = checkMatchDataAudit(home.id, away.id, 10);
+  const audit = checkMatchDataAudit(home.id, away.id, 15);
 
   return (
     <Card className="card-download-target group relative overflow-hidden p-4 transition-colors hover:border-brand-green/30 sm:p-5">

@@ -20,12 +20,12 @@ export function AnalyzedMatchCard({ match }: { match: Match }) {
   const competition = getCompetitionById(match.competitionId);
   if (!home || !away) return null;
 
-  const analysisId = buildAnalysisId(home.id, away.id, 10);
+  const analysisId = buildAnalysisId(home.id, away.id, 15);
   const analysis = resolveAnalysisById(analysisId);
   const perfectCrosses =
     analysis?.crossPatterns.filter((pattern) => pattern.teamAStat.percentage === 100 && pattern.teamBStat.percentage === 100).length ?? 0;
 
-  const audit = checkMatchDataAudit(home.id, away.id, 10);
+  const audit = checkMatchDataAudit(home.id, away.id, 15);
 
   return (
     <Link href={`/analisis/${analysisId}`} className="group">

@@ -336,22 +336,280 @@ function HistoryTable({ name, matches, profile }: { name: string; matches: Tenni
   );
 }
 
+export function RecommendationBadge({ recommendation }: { recommendation: "fuerte" | "moderada" | "evitar" }) {
+  if (recommendation === "fuerte") {
+    return (
+      <Badge className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-0.5 shadow-sm text-[11px]">
+        APOSTAR (FUERTE)
+      </Badge>
+    );
+  }
+  if (recommendation === "moderada") {
+    return (
+      <Badge className="bg-amber-500 hover:bg-amber-400 text-black font-semibold px-2 py-0.5 shadow-sm text-[11px]">
+        APOSTAR (MODERADA)
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-400 font-medium px-2 py-0.5 text-[11px]">
+      🚫 NO APOSTAR
+    </Badge>
+  );
+}
+
 function MarketGrid({ markets }: { markets: TennisMarketPrediction[] }) {
-  return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{[...markets].sort((a,b) => b.probability-a.probability).map((item) => <Card key={item.id} className={cn(item.recommendation === "fuerte" && "ring-brand-green/50")}><CardHeader><div className="flex items-start justify-between gap-2"><div><CardDescription>{item.market}</CardDescription><CardTitle className="mt-1">{item.selection}</CardTitle></div><Badge variant={item.recommendation === "evitar" ? "outline" : "secondary"}>{item.recommendation}</Badge></div></CardHeader><CardContent><div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted/60 p-3"><p className="text-xs text-muted-foreground">Probabilidad</p><p className="text-xl font-bold">{item.probability}%</p></div><div className="rounded-lg bg-muted/60 p-3"><p className="text-xs text-muted-foreground">Confianza</p><p className="text-xl font-bold">{item.confidence}%</p></div></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full", item.recommendation === "fuerte" ? "bg-brand-green" : item.recommendation === "moderada" ? "bg-brand-yellow" : "bg-border")} style={{width:`${item.probability}%`}} /></div><ul className="mt-3 space-y-1 text-xs text-muted-foreground">{item.evidence.map((e) => <li key={e}>• {e}</li>)}</ul></CardContent></Card>)}</div>;
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {[...markets]
+        .sort((a, b) => b.probability - a.probability)
+        .map((item) => (
+          <Card key={item.id} className={cn(item.recommendation === "fuerte" && "ring-brand-green/50")}>
+            <CardHeader>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <CardDescription>{item.market}</CardDescription>
+                  <CardTitle className="mt-1">{item.selection}</CardTitle>
+                </div>
+                <RecommendationBadge recommendation={item.recommendation} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-muted/60 p-3">
+                  <p className="text-xs text-muted-foreground">Probabilidad</p>
+                  <p className="text-xl font-bold">{item.probability}%</p>
+                </div>
+                <div className="rounded-lg bg-muted/60 p-3">
+                  <p className="text-xs text-muted-foreground">Confianza</p>
+                  <p className="text-xl font-bold">{item.confidence}%</p>
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    "h-full",
+                    item.recommendation === "fuerte"
+                      ? "bg-brand-green"
+                      : item.recommendation === "moderada"
+                      ? "bg-brand-yellow"
+                      : "bg-border"
+                  )}
+                  style={{ width: `${item.probability}%` }}
+                />
+              </div>
+              <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+                {item.evidence.map((e) => (
+                  <li key={e}>• {e}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ))}
+    </div>
+  );
 }
 
 function MarketAuditGrid({ event, analysis }: { event: TennisStoredEvent; analysis: TennisAnalysis }) {
-  if (!event.actualResult) return <Alert><ClipboardCheck /><AlertTitle>Resultado pendiente</AlertTitle><AlertDescription>Registra el resultado final para evaluar las 17 selecciones.</AlertDescription></Alert>;
+  if (!event.actualResult) {
+    return (
+      <Alert>
+        <ClipboardCheck />
+        <AlertTitle>Resultado pendiente</AlertTitle>
+        <AlertDescription>Registra el resultado final para evaluar las 17 selecciones.</AlertDescription>
+      </Alert>
+    );
+  }
+
   const winnerIsPlayer1 = event.actualResult.winner === event.input.player1.name;
   const audits = auditTennisMarkets(analysis, {
     id: event.id,
     winner: event.actualResult.winner,
-    score: event.actualResult.sets.map((set) => winnerIsPlayer1 ? `${set.playerGames}-${set.opponentGames}` : `${set.opponentGames}-${set.playerGames}`).join(" "),
+    score: event.actualResult.sets
+      .map((set) =>
+        winnerIsPlayer1
+          ? `${set.playerGames}-${set.opponentGames}`
+          : `${set.opponentGames}-${set.playerGames}`
+      )
+      .join(" "),
     recordedAt: event.input.date,
   });
-  const hits = audits.filter((item) => item.status === "hit").length;
-  const misses = audits.filter((item) => item.status === "miss").length;
-  return <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-3"><Card className="border-brand-green/30"><CardContent><p className="text-xs text-muted-foreground">Aciertos</p><p className="mt-1 text-2xl font-bold text-brand-green-bright">{hits}</p></CardContent></Card><Card className="border-brand-red/30"><CardContent><p className="text-xs text-muted-foreground">Fallos</p><p className="mt-1 text-2xl font-bold text-brand-red">{misses}</p></CardContent></Card><Card><CardContent><p className="text-xs text-muted-foreground">Efectividad</p><p className="mt-1 text-2xl font-bold">{Math.round(hits / Math.max(1, hits + misses) * 100)}%</p></CardContent></Card></div><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{audits.map((item) => <Card key={item.marketId} className={cn(item.status === "hit" ? "border-brand-green/30" : "border-brand-red/30")}><CardContent><div className="flex items-start justify-between gap-2"><p className="text-xs text-muted-foreground">{item.market}</p><Badge className={item.status === "hit" ? "bg-brand-green text-black" : "bg-brand-red text-white"}>{item.status === "hit" ? "Acierto" : "Fallo"}</Badge></div><p className="mt-2 font-semibold">{item.selection}</p><p className="mt-1 text-xs text-muted-foreground">Resultado: {item.actual}</p></CardContent></Card>)}</div></div>;
+
+  const marketMap = new Map(analysis.markets.map((m) => [m.id, m]));
+
+  const actionableAudits = audits.filter((item) => {
+    const market = marketMap.get(item.marketId);
+    return market?.recommendation === "fuerte" || market?.recommendation === "moderada";
+  });
+
+  const avoidedAudits = audits.filter((item) => {
+    const market = marketMap.get(item.marketId);
+    return market?.recommendation === "evitar";
+  });
+
+  const actionableHits = actionableAudits.filter((item) => item.status === "hit").length;
+  const actionableMisses = actionableAudits.filter((item) => item.status === "miss").length;
+  const actionableRate = actionableAudits.length
+    ? Math.round((actionableHits / actionableAudits.length) * 100)
+    : 100;
+
+  const avoidedMisses = avoidedAudits.filter((item) => item.status === "miss").length;
+  const avoidedHits = avoidedAudits.filter((item) => item.status === "hit").length;
+
+  return (
+    <div className="space-y-6">
+      {/* SECCIÓN 1: APUESTAS SUGERIDAS POR EL SISTEMA */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <Target className="size-5 text-brand-green" /> Apuestas Sugeridas por el Sistema (Dinero en Juego)
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Mercados recomendados con alta convicción estadística (FUERTE / MODERADA).
+            </p>
+          </div>
+          <Badge className="bg-emerald-600/20 text-brand-green-bright border border-emerald-500/30">
+            {actionableAudits.length} Apuesta(s) Recomendada(s)
+          </Badge>
+        </div>
+
+        {actionableAudits.length > 0 ? (
+          <>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Card className="border-brand-green/30 bg-brand-green/5">
+                <CardContent className="pt-4">
+                  <p className="text-xs text-muted-foreground font-medium">Aciertos Reales</p>
+                  <p className="mt-1 text-2xl font-bold text-brand-green-bright">{actionableHits}</p>
+                </CardContent>
+              </Card>
+              <Card className={cn(actionableMisses > 0 ? "border-brand-red/30 bg-brand-red/5" : "border-border/50")}>
+                <CardContent className="pt-4">
+                  <p className="text-xs text-muted-foreground font-medium">Fallos Reales</p>
+                  <p className={cn("mt-1 text-2xl font-bold", actionableMisses > 0 ? "text-brand-red" : "text-muted-foreground")}>
+                    {actionableMisses}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-brand-blue/30 bg-brand-blue/5">
+                <CardContent className="pt-4">
+                  <p className="text-xs text-muted-foreground font-medium">Efectividad de Apuestas</p>
+                  <p className="mt-1 text-2xl font-bold text-brand-blue">{actionableRate}%</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {actionableAudits.map((item) => {
+                const market = marketMap.get(item.marketId);
+                const isHit = item.status === "hit";
+                return (
+                  <Card
+                    key={item.marketId}
+                    className={cn(
+                      "transition-all",
+                      isHit ? "border-emerald-500/40 bg-emerald-500/5" : "border-red-500/40 bg-red-500/5"
+                    )}
+                  >
+                    <CardContent className="pt-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs text-muted-foreground font-medium">{item.market}</p>
+                        {market && <RecommendationBadge recommendation={market.recommendation} />}
+                      </div>
+                      <p className="mt-2 text-base font-bold text-foreground">{item.selection}</p>
+                      <div className="mt-2 flex items-center justify-between border-t pt-2 text-xs">
+                        <span className="text-muted-foreground">
+                          Resultado: <strong className="text-foreground">{item.actual}</strong>
+                        </span>
+                        <Badge className={isHit ? "bg-emerald-600 text-white" : "bg-red-600 text-white"}>
+                          {isHit ? "✅ ACIERTO" : "❌ FALLO"}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <Alert className="border-amber-500/30 bg-amber-500/5">
+            <ShieldAlert className="text-amber-500" />
+            <AlertTitle>Partido protegido al 100%</AlertTitle>
+            <AlertDescription>
+              El sistema no recomendó apostar en ningún mercado debido a la alta incertidumbre y riesgo del encuentro.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      {/* SECCIÓN 2: ESCUDO DE PROTECCIÓN (MERCADOS EN NO APOSTAR) */}
+      <div className="space-y-3 pt-4 border-t">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+              <ShieldAlert className="size-5 text-amber-500" /> Escudo de Protección: Mercados en «NO APOSTAR»
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Mercados de alta varianza o trampa descartados para proteger tu capital.
+            </p>
+          </div>
+          <Badge variant="outline" className="border-red-500/30 text-red-400 bg-red-500/10">
+            {avoidedAudits.length} Mercados Protegidos
+          </Badge>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Card className="border-emerald-500/20 bg-emerald-500/5">
+            <CardContent className="pt-4">
+              <p className="text-xs text-muted-foreground font-medium">🛡️ Pérdidas Evitadas (Trampas filtradas)</p>
+              <p className="mt-1 text-2xl font-bold text-emerald-400">
+                {avoidedMisses} <span className="text-xs font-normal text-muted-foreground">mercados que fallaron</span>
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-border/50">
+            <CardContent className="pt-4">
+              <p className="text-xs text-muted-foreground font-medium">ℹ️ Mercados que se dieron (Descartados por riesgo)</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">
+                {avoidedHits} <span className="text-xs font-normal text-muted-foreground">mercados</span>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+          {avoidedAudits.map((item) => {
+            const isHit = item.status === "hit";
+            return (
+              <div
+                key={item.marketId}
+                className={cn(
+                  "rounded-lg border p-3 text-xs transition-colors",
+                  !isHit ? "border-emerald-500/20 bg-emerald-950/10" : "border-border/40 bg-muted/20"
+                )}
+              >
+                <div className="flex items-start justify-between gap-1">
+                  <span className="font-medium text-muted-foreground truncate">{item.market}</span>
+                  <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 bg-red-500/10 shrink-0">
+                    NO APOSTAR
+                  </Badge>
+                </div>
+                <p className="mt-1 font-semibold text-foreground truncate">{item.selection}</p>
+                <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>Resultado: {item.actual}</span>
+                  {!isHit ? (
+                    <span className="text-emerald-400 font-medium flex items-center gap-1">🛡️ Trampa evitada</span>
+                  ) : (
+                    <span className="text-muted-foreground">Se cumplió</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function signed(value: number): string {

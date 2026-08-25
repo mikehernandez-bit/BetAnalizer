@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, BarChart3, CalendarDays, CheckCircle2, ClipboardCheck, Database, History, PencilLine, Save, Target, Trash2, Trophy, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, BarChart3, CalendarDays, CheckCircle2, ClipboardCheck, Database, History, PencilLine, Save, ShieldAlert, Target, Trash2, Trophy, XCircle } from "lucide-react";
 import { analyzeTennisMatch, formatTennisHistoryText, parseTennisHistoryText, surfaceLabel, validateTennisInput } from "@/services/tennis-analysis-service";
 import type { TennisAnalysis, TennisMarketAuditResult, TennisMatchInput, TennisPlayerProfile, TennisRecordedOutcome, TennisStoredEvent, TennisSurface } from "@/types/tennis";
 import { tennisEvents } from "@/data/tennis-events";
@@ -268,12 +268,21 @@ function AnalysisResult({ analysis }: { analysis: TennisAnalysis }) {
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{MARKET_LABELS[item.category]}</p>
                     <CardTitle className="mt-1">{item.market}</CardTitle>
                   </div>
-                  <Badge
-                    variant={item.recommendation === "evitar" ? "outline" : "secondary"}
-                    className={item.recommendation === "fuerte" ? "bg-brand-green/15 text-brand-green-bright" : undefined}
-                  >
-                    {item.recommendation}
-                  </Badge>
+                  {item.recommendation === "fuerte" && (
+                    <Badge className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-sm">
+                      APOSTAR (FUERTE)
+                    </Badge>
+                  )}
+                  {item.recommendation === "moderada" && (
+                    <Badge className="bg-amber-500 hover:bg-amber-400 text-black font-semibold text-[11px] shadow-sm">
+                      APOSTAR (MODERADA)
+                    </Badge>
+                  )}
+                  {item.recommendation === "evitar" && (
+                    <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-400 font-medium text-[11px]">
+                      🚫 NO APOSTAR
+                    </Badge>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -351,18 +360,113 @@ function RecordTennisResultDialog({
   </Dialog>;
 }
 
-function MarketAuditDialog({ audits }: { audits: TennisMarketAuditResult[] }) {
-  const hits = audits.filter((item) => item.status === "hit").length;
-  const misses = audits.filter((item) => item.status === "miss").length;
-  return <Dialog>
-    <DialogTrigger asChild><Button variant="outline"><ClipboardCheck /> Ver auditoría ({audits.length})</Button></DialogTrigger>
-    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-      <DialogHeader><DialogTitle>Auditoría de todos los mercados</DialogTitle><DialogDescription>Cada selección prepartido se compara con el marcador final. Resultado: {hits} aciertos y {misses} fallos.</DialogDescription></DialogHeader>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {audits.map((item) => <div key={item.marketId} className={cn("rounded-lg border p-3", item.status === "hit" ? "border-brand-green/30 bg-brand-green/5" : item.status === "miss" ? "border-brand-red/30 bg-brand-red/5" : "border-border bg-muted/30")}><div className="flex items-start justify-between gap-2"><p className="text-xs text-muted-foreground">{item.market}</p><Badge className={cn(item.status === "hit" ? "bg-brand-green text-black" : item.status === "miss" ? "bg-brand-red text-white" : "")}>{item.status === "hit" ? "Acierto" : item.status === "miss" ? "Fallo" : "Nulo"}</Badge></div><p className="mt-1 font-semibold">{item.selection}</p><p className="mt-1 text-xs text-muted-foreground">Resultado: {item.actual}</p></div>)}
-      </div>
-    </DialogContent>
-  </Dialog>;
+function MarketAuditDialog({ audits, preview }: { audits: TennisMarketAuditResult[]; preview?: TennisAnalysis }) {
+  const marketMap = new Map(preview?.markets.map((m) => [m.id, m]));
+  const actionableAudits = audits.filter((item) => {
+    const market = marketMap.get(item.marketId);
+    return market?.recommendation === "fuerte" || market?.recommendation === "moderada";
+  });
+  const avoidedAudits = audits.filter((item) => {
+    const market = marketMap.get(item.marketId);
+    return !market || market.recommendation === "evitar";
+  });
+
+  const actionableHits = actionableAudits.filter((item) => item.status === "hit").length;
+  const actionableMisses = actionableAudits.filter((item) => item.status === "miss").length;
+  const actionableRate = actionableAudits.length ? Math.round((actionableHits / actionableAudits.length) * 100) : 100;
+  const avoidedMisses = avoidedAudits.filter((item) => item.status === "miss").length;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="default">
+          <ClipboardCheck className="size-4 mr-1 text-emerald-400" />
+          Ver auditoría ({actionableHits}/{actionableAudits.length} apuestas)
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Auditoría del Encuentro</DialogTitle>
+          <DialogDescription>
+            {actionableAudits.length} apuesta(s) recomendada(s): {actionableHits} aciertos, {actionableMisses} fallos ({actionableRate}% efectividad). {avoidedMisses} trampa(s) evitada(s) en «NO APOSTAR».
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* Apuestas recomendadas */}
+          <div>
+            <h4 className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
+              <Target className="size-4 text-brand-green" /> Apuestas Sugeridas por el Sistema (Dinero en Juego)
+            </h4>
+            {actionableAudits.length ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {actionableAudits.map((item) => {
+                  const isHit = item.status === "hit";
+                  return (
+                    <div
+                      key={item.marketId}
+                      className={cn(
+                        "rounded-lg border p-3",
+                        isHit ? "border-emerald-500/30 bg-emerald-500/5" : "border-red-500/30 bg-red-500/5"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs text-muted-foreground">{item.market}</p>
+                        <Badge className={isHit ? "bg-emerald-600 text-white" : "bg-red-600 text-white"}>
+                          {isHit ? "✅ Acierto" : "❌ Fallo"}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 font-semibold text-foreground">{item.selection}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Resultado: {item.actual}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No hubo apuestas sugeridas (partido 100% protegido).</p>
+            )}
+          </div>
+
+          {/* Mercados en NO APOSTAR */}
+          <div className="border-t pt-3">
+            <h4 className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
+              <ShieldAlert className="size-4 text-amber-500" /> Escudo de Protección (Mercados en «NO APOSTAR»)
+            </h4>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {avoidedAudits.map((item) => {
+                const isHit = item.status === "hit";
+                return (
+                  <div
+                    key={item.marketId}
+                    className={cn(
+                      "rounded-lg border p-2.5 text-xs",
+                      !isHit ? "border-emerald-500/20 bg-emerald-950/10" : "border-border bg-muted/20"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="text-muted-foreground font-medium truncate">{item.market}</p>
+                      <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 bg-red-500/10 shrink-0">
+                        NO APOSTAR
+                      </Badge>
+                    </div>
+                    <p className="mt-1 font-semibold truncate">{item.selection}</p>
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span>Resultado: {item.actual}</span>
+                      {!isHit ? (
+                        <span className="text-emerald-400 font-medium">🛡️ Trampa evitada</span>
+                      ) : (
+                        <span>Se cumplió</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function StoredEventCard({ event, outcome, returnDay, onLoad, onSaveOutcome }: { event: TennisStoredEvent; outcome?: TennisRecordedOutcome; returnDay: TennisDayFilter; onLoad: (event: TennisStoredEvent) => void; onSaveOutcome: (outcome: TennisRecordedOutcome) => void }) {
@@ -372,8 +476,19 @@ function StoredEventCard({ event, outcome, returnDay, onLoad, onSaveOutcome }: {
   const result = outcome?.score;
   const completed = Boolean(outcome);
   const marketAudits = outcome ? auditTennisMarkets(preview, outcome) : [];
-  const marketHits = marketAudits.filter((item) => item.status === "hit").length;
-  const marketMisses = marketAudits.filter((item) => item.status === "miss").length;
+  const marketMap = new Map(preview.markets.map((m) => [m.id, m]));
+  const actionableAudits = marketAudits.filter((a) => {
+    const m = marketMap.get(a.marketId);
+    return m?.recommendation === "fuerte" || m?.recommendation === "moderada";
+  });
+  const actionableHits = actionableAudits.filter((a) => a.status === "hit").length;
+  const actionableMisses = actionableAudits.filter((a) => a.status === "miss").length;
+  const actionableRate = actionableAudits.length ? Math.round((actionableHits / actionableAudits.length) * 100) : 100;
+  const avoidedMisses = marketAudits.filter((a) => {
+    const m = marketMap.get(a.marketId);
+    return (!m || m.recommendation === "evitar") && a.status === "miss";
+  }).length;
+
   return (
     <Card className="group border-brand-blue/30 bg-gradient-to-br from-brand-blue/10 via-card to-card transition-colors hover:border-brand-green/40">
       <CardHeader>
@@ -400,7 +515,7 @@ function StoredEventCard({ event, outcome, returnDay, onLoad, onSaveOutcome }: {
             <Button asChild><Link href={`/tenis/${event.id}?day=${returnDay}`}>Abrir análisis completo <ArrowRight /></Link></Button>
             <Button variant="outline" onClick={() => onLoad(event)}><BarChart3 /> Cargar en editor</Button>
             <RecordTennisResultDialog id={event.id} player1={event.input.player1.name} player2={event.input.player2.name} current={outcome} predictedWinner={preview.projectedWinner} bestOf={event.input.bestOf} onSave={onSaveOutcome} />
-            {outcome && <MarketAuditDialog audits={marketAudits} />}
+            {outcome && <MarketAuditDialog audits={marketAudits} preview={preview} />}
           </div>
         </div>
       </CardHeader>
@@ -430,7 +545,7 @@ function StoredEventCard({ event, outcome, returnDay, onLoad, onSaveOutcome }: {
           <div className={cn("rounded-lg border px-4 py-2 text-sm", hit ? "border-brand-green/30 bg-brand-green/10" : "border-brand-red/30 bg-brand-red/10")}>
             <span className="text-xs text-muted-foreground">Resultado final · Ganador {hit ? "acertado" : "fallado"}</span>
             <p className={cn("font-semibold", hit ? "text-brand-green-bright" : "text-brand-red")}>{outcome.winner} · {result}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Todos los mercados: {marketHits} aciertos · {marketMisses} fallos</p>
+            <p className="mt-1 text-xs text-muted-foreground">Apuestas sugeridas: <strong className="text-foreground">{actionableHits}/{actionableAudits.length} ({actionableRate}%)</strong> · {avoidedMisses} trampa(s) evitada(s)</p>
           </div>
         )}
         </div>
@@ -572,9 +687,35 @@ export function TennisWorkspace({ initialDay = "today" }: { initialDay?: TennisD
       outcome: outcomes[item.id] ?? (storedEvent ? officialOutcome(storedEvent) : undefined),
     };
   });
-  const marketAudits = analysesWithOutcome.flatMap((item) => item.outcome ? auditTennisMarkets(item.analysis, item.outcome) : []);
-  const pendingMarkets = analysesWithOutcome.filter((item) => !item.outcome).reduce((sum, item) => sum + item.analysis.markets.length, 0);
-  const audit = summarizeTennisMarketAudits(marketAudits, pendingMarkets);
+  const allActionableAudits = analysesWithOutcome.flatMap((item) => {
+    if (!item.outcome) return [];
+    const marketMap = new Map(item.analysis.markets.map((m) => [m.id, m]));
+    const audits = auditTennisMarkets(item.analysis, item.outcome);
+    return audits.filter((a) => {
+      const m = marketMap.get(a.marketId);
+      return m?.recommendation === "fuerte" || m?.recommendation === "moderada";
+    });
+  });
+
+  const allAvoidedAudits = analysesWithOutcome.flatMap((item) => {
+    if (!item.outcome) return [];
+    const marketMap = new Map(item.analysis.markets.map((m) => [m.id, m]));
+    const audits = auditTennisMarkets(item.analysis, item.outcome);
+    return audits.filter((a) => {
+      const m = marketMap.get(a.marketId);
+      return !m || m.recommendation === "evitar";
+    });
+  });
+
+  const totalActionableHits = allActionableAudits.filter((a) => a.status === "hit").length;
+  const totalActionableMisses = allActionableAudits.filter((a) => a.status === "miss").length;
+  const totalActionableRate = allActionableAudits.length
+    ? Math.round((totalActionableHits / allActionableAudits.length) * 100)
+    : 0;
+
+  const totalTrapsAvoided = allAvoidedAudits.filter((a) => a.status === "miss").length;
+  const completedCount = analysesWithOutcome.filter((item) => Boolean(item.outcome)).length;
+
   const modelComparison = React.useMemo(() => compareTennisModels(tennisEvents, outcomes), [outcomes]);
   const eventDayGroups = React.useMemo(() => groupTennisEventsByDay(tennisEvents), []);
   const selectedEventGroup = eventDayFilter === "yesterday"
@@ -617,11 +758,45 @@ export function TennisWorkspace({ initialDay = "today" }: { initialDay?: TennisD
           </Card>
         )}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <Card><CardContent><p className="text-xs text-muted-foreground">Mercados registrados</p><p className="mt-1 text-2xl font-bold">{allPredictions.reduce((sum, item) => sum + item.markets.length, 0)}</p><p className="text-xs text-muted-foreground">{allPredictions.length} encuentros</p></CardContent></Card>
-          <Card><CardContent><p className="text-xs text-muted-foreground">Mercados pendientes</p><p className="mt-1 text-2xl font-bold">{audit.pending}</p></CardContent></Card>
-          <Card className="border-brand-green/30"><CardContent><p className="text-xs text-muted-foreground">Aciertos</p><p className="mt-1 flex items-center gap-2 text-2xl font-bold text-brand-green-bright"><CheckCircle2 className="size-5" />{audit.hits}</p></CardContent></Card>
-          <Card className="border-brand-red/30"><CardContent><p className="text-xs text-muted-foreground">Fallos</p><p className="mt-1 flex items-center gap-2 text-2xl font-bold text-brand-red"><XCircle className="size-5" />{audit.misses}</p></CardContent></Card>
-          <Card><CardContent><p className="text-xs text-muted-foreground">Efectividad de mercados</p><p className="mt-1 text-2xl font-bold">{audit.audited ? `${audit.accuracy}%` : "—"}</p><p className="text-xs text-muted-foreground">{audit.hits}/{audit.audited} selecciones</p></CardContent></Card>
+          <Card>
+            <CardContent className="pt-4">
+              <p className="text-xs text-muted-foreground font-medium">Encuentros finalizados</p>
+              <p className="mt-1 text-2xl font-bold">{completedCount}</p>
+              <p className="text-xs text-muted-foreground">{tennisEvents.length} encuentros totales</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <p className="text-xs text-muted-foreground font-medium">Apuestas sugeridas</p>
+              <p className="mt-1 text-2xl font-bold">{allActionableAudits.length}</p>
+              <p className="text-xs text-muted-foreground">Recomendadas por el modelo</p>
+            </CardContent>
+          </Card>
+          <Card className="border-brand-green/30 bg-brand-green/5">
+            <CardContent className="pt-4">
+              <p className="text-xs text-muted-foreground font-medium">Aciertos reales</p>
+              <p className="mt-1 flex items-center gap-2 text-2xl font-bold text-brand-green-bright">
+                <CheckCircle2 className="size-5" />{totalActionableHits}
+              </p>
+              <p className="text-xs text-brand-green-bright font-medium">Apuestas ganadas</p>
+            </CardContent>
+          </Card>
+          <Card className={cn(totalActionableMisses > 0 ? "border-brand-red/30 bg-brand-red/5" : "border-border")}>
+            <CardContent className="pt-4">
+              <p className="text-xs text-muted-foreground font-medium">Fallos reales</p>
+              <p className={cn("mt-1 flex items-center gap-2 text-2xl font-bold", totalActionableMisses > 0 ? "text-brand-red" : "text-muted-foreground")}>
+                <XCircle className="size-5" />{totalActionableMisses}
+              </p>
+              <p className="text-xs text-muted-foreground">Apuestas perdidas</p>
+            </CardContent>
+          </Card>
+          <Card className="border-brand-blue/30 bg-brand-blue/5">
+            <CardContent className="pt-4">
+              <p className="text-xs text-muted-foreground font-medium">Efectividad de apuestas</p>
+              <p className="mt-1 text-2xl font-bold text-brand-blue">{allActionableAudits.length ? `${totalActionableRate}%` : "—"}</p>
+              <p className="text-xs text-emerald-400 font-medium">{totalTrapsAvoided} trampas evitadas (NO APOSTAR)</p>
+            </CardContent>
+          </Card>
         </div>
         <Card className="border-slate-800 bg-slate-900/90">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">

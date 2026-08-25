@@ -77,9 +77,9 @@ export function mergeHistoriesMaps(
   for (const teamId of teamIds) {
     const oldRecords = oldMap[teamId] ?? [];
     const newRecords = newMap[teamId] ?? [];
-    if (newRecords.length >= 10) {
+    if (newRecords.length >= 15) {
       result[teamId] = [...newRecords];
-    } else if (oldRecords.length >= 10 && newRecords.length === 0) {
+    } else if (oldRecords.length >= 15 && newRecords.length === 0) {
       result[teamId] = [...oldRecords];
     } else {
       result[teamId] = mergeHistoryRecords(oldRecords, newRecords);
