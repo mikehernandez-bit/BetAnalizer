@@ -369,9 +369,25 @@ export async function syncRecordedOutcomesFromDisk(): Promise<Record<string, Rec
     if (!res.ok) return readRecordedOutcomes();
     const data = await res.json();
     if (data && data.success && data.outcomes) {
-      const current = readRecordedOutcomes();
-      const merged = { ...data.outcomes, ...current };
+      let local: Record<string, RecordedMatchOutcome> = {};
+      try {
+        const raw = window.localStorage.getItem(OUTCOMES_STORAGE_KEY);
+        local = raw ? JSON.parse(raw) : {};
+      } catch {}
+
+      const merged = { ...data.outcomes, ...local };
       window.localStorage.setItem(OUTCOMES_STORAGE_KEY, JSON.stringify(merged));
+
+      // Si localStorage tiene resultados que no estaban en disco, los subimos automáticamente
+      const unsavedEntries = Object.entries(local).filter(([id]) => !data.outcomes[id]);
+      if (unsavedEntries.length > 0) {
+        fetch("/api/football-outcomes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ outcomes: local }),
+        }).catch(() => {});
+      }
+
       return merged;
     }
   } catch {

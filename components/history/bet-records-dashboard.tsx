@@ -129,7 +129,7 @@ function toNumber(value: string): number | undefined {
 export function BetRecordsDashboard() {
   const [summary, setSummary] = React.useState<ThreeDayAuditSummary | null>(null);
   const [mounted, setMounted] = React.useState(false);
-  const [dayFilter, setDayFilter] = React.useState<DayFilter>("today");
+  const [dayFilter, setDayFilter] = React.useState<DayFilter>("all");
   const [riskTier, setRiskTier] = React.useState<HistoryRiskTier>("balanced");
   const [activeMatch, setActiveMatch] = React.useState<ThreeDayAuditedMatch | null>(null);
   const [form, setForm] = React.useState<OutcomeForm>(EMPTY_OUTCOME);
