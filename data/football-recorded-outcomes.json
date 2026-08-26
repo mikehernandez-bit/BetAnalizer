@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "outcomes": {
+    "fulham-vs-chelsea-2026-08-24": {
+      "homeGoals": 2,
+      "awayGoals": 3,
+      "homeGoalsFirstHalf": 1,
+      "awayGoalsFirstHalf": 1,
+      "homeCorners": 5,
+      "awayCorners": 6,
+      "homeYellowCards": 2,
+      "awayYellowCards": 3,
+      "homeRedCards": 0,
+      "awayRedCards": 0,
+      "recordedAt": "2026-08-25T12:00:00.000Z"
+    }
+  }
+}

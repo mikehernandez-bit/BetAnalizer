@@ -28,6 +28,7 @@ import {
   saveMarketReliability,
   savePredictionSnapshot,
 } from "@/lib/model-feedback";
+import defaultFootballOutcomes from "@/data/football-recorded-outcomes.json";
 
 const STORAGE_KEY = "betanalyzer.tracked-tickets.v1";
 const OUTCOMES_STORAGE_KEY = "betanalyzer.recorded-outcomes.v1";
@@ -317,29 +318,66 @@ export interface ThreeDayAuditSummary {
 // ----------------------------------------------------------------------------
 
 export function readRecordedOutcomes(): Record<string, RecordedMatchOutcome> {
-  if (typeof window === "undefined") return {};
+  const diskOutcomes: Record<string, RecordedMatchOutcome> =
+    defaultFootballOutcomes && typeof defaultFootballOutcomes === "object" && "outcomes" in defaultFootballOutcomes
+      ? (defaultFootballOutcomes.outcomes as Record<string, RecordedMatchOutcome>)
+      : {};
+
+  if (typeof window === "undefined") return diskOutcomes;
   try {
     const raw = window.localStorage.getItem(OUTCOMES_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    const local = raw ? JSON.parse(raw) : {};
+    return { ...diskOutcomes, ...local };
   } catch {
-    return {};
+    return diskOutcomes;
   }
 }
 
 export function saveRecordedOutcome(matchId: string, outcome: RecordedMatchOutcome): void {
-  if (typeof window === "undefined") return;
   const current = readRecordedOutcomes();
   current[matchId] = outcome;
-  window.localStorage.setItem(OUTCOMES_STORAGE_KEY, JSON.stringify(current));
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(OUTCOMES_STORAGE_KEY, JSON.stringify(current));
+    // Persistencia automática asíncrona en disco en /api/football-outcomes
+    fetch("/api/football-outcomes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchId, outcome }),
+    }).catch(() => {
+      // Si falla la red local, el resultado permanece seguro en localStorage
+    });
+  }
   rebuildMarketReliability();
 }
 
 export function deleteRecordedOutcome(matchId: string): void {
-  if (typeof window === "undefined") return;
   const current = readRecordedOutcomes();
   delete current[matchId];
-  window.localStorage.setItem(OUTCOMES_STORAGE_KEY, JSON.stringify(current));
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(OUTCOMES_STORAGE_KEY, JSON.stringify(current));
+    fetch(`/api/football-outcomes?matchId=${encodeURIComponent(matchId)}`, {
+      method: "DELETE",
+    }).catch(() => {});
+  }
   rebuildMarketReliability();
+}
+
+export async function syncRecordedOutcomesFromDisk(): Promise<Record<string, RecordedMatchOutcome>> {
+  if (typeof window === "undefined") return readRecordedOutcomes();
+  try {
+    const res = await fetch("/api/football-outcomes", { cache: "no-store" });
+    if (!res.ok) return readRecordedOutcomes();
+    const data = await res.json();
+    if (data && data.success && data.outcomes) {
+      const current = readRecordedOutcomes();
+      const merged = { ...data.outcomes, ...current };
+      window.localStorage.setItem(OUTCOMES_STORAGE_KEY, JSON.stringify(merged));
+      return merged;
+    }
+  } catch {
+    // Silencioso
+  }
+  return readRecordedOutcomes();
 }
 
 function rebuildMarketReliability() {

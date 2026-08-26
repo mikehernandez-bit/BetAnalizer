@@ -27,6 +27,7 @@ import {
   scanThreeDayAuditMatches,
   saveRecordedOutcome,
   deleteRecordedOutcome,
+  syncRecordedOutcomesFromDisk,
 } from "@/lib/bet-records";
 import { RecordedMatchOutcome } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -145,11 +146,18 @@ export function BetRecordsDashboard() {
   };
 
   React.useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      refreshAudit(riskTier);
-      setMounted(true);
-    });
-    return () => window.cancelAnimationFrame(frame);
+    let cancelled = false;
+    async function init() {
+      await syncRecordedOutcomesFromDisk();
+      if (!cancelled) {
+        refreshAudit(riskTier);
+        setMounted(true);
+      }
+    }
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, [refreshAudit, riskTier]);
 
   const openSettlement = (match: ThreeDayAuditedMatch) => {
