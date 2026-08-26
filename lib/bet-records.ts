@@ -562,11 +562,7 @@ function synchronizeRecordedOutcomeSnapshots(outcomes: Record<string, RecordedMa
             market.confidence >= 80 &&
             market.statisticalEstimate >= 80 &&
             market.recommendation === "recomendado" &&
-            market.market.id !== "goals_home_under_15" &&
-            market.market.id !== "goals_away_under_15" &&
-            market.market.id !== "goals_under_15" &&
-            market.market.id !== "corners_over_95" &&
-            market.market.id !== "corners_over_105"
+            isSafeBroadLineMarket(market.market.id, "balanced")
         )
         .map(selectionFromEvaluation);
       savePredictionSnapshot({
@@ -671,43 +667,69 @@ function getTargetDates(referenceIso?: string): { yesterday: string; today: stri
 export type HistoryRiskTier = "ultra" | "balanced" | "all";
 
 export function isSafeBroadLineMarket(marketId: string, riskTier: HistoryRiskTier = "balanced"): boolean {
-  // Micromercados de alta volatilidad excluidos de las bets calificadas seguras (Under cerrados y líneas ajustadas)
+  // Micromercados de alta volatilidad excluidos de las apuestas calificadas seguras:
+  // 1. Under cerrados de goles (-1.5, -2.5, -3.5) y Under de equipo individual
+  // 2. Líneas de córners intermedias/ajustadas (+6.5 a +10.5, -7.5 a -12.5, Hándicaps +1.5)
+  // 3. Hándicaps de goles cortos (+1.5) propensos a derrota por 2+ goles (se prefiere +2.5 / +3.5)
+  // 4. Goles de visitante individuales (alta tasa de blanqueada) y +1.5 goles ajustado
+  // 5. Tarjetas con baja fricción o árbitros permisivos (se prefiere tarjeta local +0.5)
   const highVarianceMarkets = new Set([
     "goals_home_under_15",
     "goals_home_under_25",
+    "goals_home_under_35",
     "goals_away_under_15",
     "goals_away_under_25",
+    "goals_away_under_35",
     "goals_under_15",
     "goals_under_25",
+    "goals_over_15",
+    "goals_away_over_05",
+    "goals_away_over_15",
+    "goals_away_scores",
+    "away_team_scores",
+    "corners_over_65",
+    "corners_over_75",
+    "corners_over_85",
     "corners_over_95",
     "corners_over_105",
     "corners_under_75",
     "corners_under_85",
+    "corners_under_95",
+    "corners_under_105",
+    "corners_under_115",
+    "corners_under_125",
+    "corners_handicap_home_plus_15",
+    "corners_handicap_away_plus_15",
+    "goals_handicap_home_plus_15",
+    "goals_handicap_away_plus_15",
+    "cards_away_over_05",
+    "cards_over_15",
+    "cards_over_25",
+    "cards_btts",
+    "cards_total_over_15",
+    "cards_total_over_25",
+    "cards_both_teams_over_05",
+    "cards_both_teams_booked",
+    "cards_both_teams_yellow",
   ]);
 
   if (riskTier === "ultra") {
-    // En Ultra Seguro: solo líneas de máxima solidez (+0.5 goles, -3.5/-4.5 goles, Hándicaps +1.5/+2.5, +0.5 tarjetas)
+    // En Ultra Seguro: solo líneas de máxima cobertura y solidez garantizada
     const ultraSafeLines = new Set([
       "goals_over_05",
-      "goals_over_15",
       "goals_under_35",
       "goals_under_45",
-      "goals_home_under_35",
-      "goals_away_under_35",
+      "goals_under_55",
       "goals_home_over_05",
-      "goals_away_over_05",
-      "goals_handicap_home_plus_15",
+      "home_team_scores",
+      "goals_home_marca",
       "goals_handicap_home_plus_25",
-      "goals_handicap_away_plus_15",
       "goals_handicap_away_plus_25",
+      "goals_handicap_home_plus_35",
+      "goals_handicap_away_plus_35",
       "cards_home_over_05",
-      "cards_away_over_05",
-      "cards_over_15",
-      "cards_over_25",
       "corners_home_over_25",
       "corners_away_over_25",
-      "corners_over_65",
-      "corners_over_75",
       "ht_goals_under_25",
       "goals_1h_under_25",
     ]);
