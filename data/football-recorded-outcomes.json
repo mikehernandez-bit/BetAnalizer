@@ -553,6 +553,58 @@
       "homeRedCards": 0,
       "awayRedCards": 0,
       "recordedAt": "2026-08-26T21:22:35.327Z"
+    },
+    "sporting-cristal-vs-sport-huancayo-2026-08-26": {
+      "homeGoals": 4,
+      "awayGoals": 1,
+      "homeGoalsFirstHalf": 1,
+      "awayGoalsFirstHalf": 1,
+      "homeCorners": 10,
+      "awayCorners": 2,
+      "homeYellowCards": 0,
+      "awayYellowCards": 3,
+      "homeRedCards": 0,
+      "awayRedCards": 1,
+      "recordedAt": "2026-08-27T00:42:26.520Z"
+    },
+    "deportivo-toluca-vs-austin-fc-2026-08-26": {
+      "homeGoals": 2,
+      "awayGoals": 0,
+      "homeGoalsFirstHalf": 2,
+      "awayGoalsFirstHalf": 0,
+      "homeCorners": 6,
+      "awayCorners": 8,
+      "homeYellowCards": 3,
+      "awayYellowCards": 2,
+      "homeRedCards": 0,
+      "awayRedCards": 1,
+      "recordedAt": "2026-08-27T02:55:14.626Z"
+    },
+    "river-plate-vs-independiente-santa-fe-2026-08-26": {
+      "homeGoals": 1,
+      "awayGoals": 1,
+      "homeGoalsFirstHalf": 0,
+      "awayGoalsFirstHalf": 0,
+      "homeCorners": 6,
+      "awayCorners": 2,
+      "homeYellowCards": 2,
+      "awayYellowCards": 1,
+      "homeRedCards": 0,
+      "awayRedCards": 0,
+      "recordedAt": "2026-08-27T02:56:04.861Z"
+    },
+    "club-america-vs-columbus-crew-2026-08-26": {
+      "homeGoals": 1,
+      "awayGoals": 0,
+      "homeGoalsFirstHalf": 1,
+      "awayGoalsFirstHalf": 0,
+      "homeCorners": 1,
+      "awayCorners": 6,
+      "homeYellowCards": 0,
+      "awayYellowCards": 0,
+      "homeRedCards": 0,
+      "awayRedCards": 0,
+      "recordedAt": "2026-08-27T03:44:36.183Z"
     }
   }
 }
