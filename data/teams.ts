@@ -5880,8 +5880,44 @@ const BUILT_IN_TEAMS: Team[] = [
 
 export const teams = mergeById(BUILT_IN_TEAMS, importedTeams);
 
+function normalizeTeamLookupId(id: string): string {
+  if (!id) return "";
+  const map: Record<string, string> = {
+    "atlanta-united-fc": "atlanta-united",
+    "atlanta-united": "atlanta-united",
+    "club-alianza-lima": "alianza-lima",
+    "alianza-lima": "alianza-lima",
+    "inter-miami-cf": "inter-miami",
+    "inter-miami": "inter-miami",
+    "los-angeles-fc": "lafc",
+    "los-angeles": "lafc",
+    "lafc": "lafc",
+    "cf-montreal": "montreal-impact",
+    "montreal-impact": "montreal-impact",
+    "charlotte-fc": "charlotte",
+    "charlotte": "charlotte",
+    "new-york-city-fc": "new-york-city",
+    "new-york-city": "new-york-city",
+    "new-york-red-bulls": "ny-red-bulls",
+    "ny-red-bulls": "ny-red-bulls",
+    "utc-de-cajamarca": "utc-cajamarca",
+    "utc-cajamarca": "utc-cajamarca",
+  };
+  return map[id] || id;
+}
+
 export function getTeamById(id: string): Team | undefined {
-  return teams.find((t) => t.id === id);
+  if (!id) return undefined;
+  const direct = teams.find((t) => t.id === id);
+  if (direct) return direct;
+
+  const normalized = normalizeTeamLookupId(id);
+  const byNorm = teams.find((t) => t.id === normalized || normalizeTeamLookupId(t.id) === normalized);
+  if (byNorm) return byNorm;
+
+  // Fallback por prefijo/sufijo
+  const stripped = id.replace(/-fc$|^club-|-cf$/, "");
+  return teams.find((t) => t.id.replace(/-fc$|^club-|-cf$/, "") === stripped);
 }
 
 export function getTeamsByCompetition(competitionId: string): Team[] {

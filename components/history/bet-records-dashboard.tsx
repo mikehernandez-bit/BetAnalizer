@@ -210,9 +210,7 @@ export function BetRecordsDashboard() {
 
   const filteredMatches = summary.matches.filter((m) => {
     if (dayFilter !== "all" && m.dayRelative !== dayFilter) return false;
-    const hasQualifyingBets = m.qualifyingBets && m.qualifyingBets.length > 0;
-    const hasActiveWinner = m.winnerPrediction && !m.winnerPrediction.noBet;
-    return hasQualifyingBets || hasActiveWinner;
+    return true;
   });
 
   const allFilteredBets = filteredMatches.flatMap((m) => m.qualifyingBets);

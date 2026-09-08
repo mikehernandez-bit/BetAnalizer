@@ -30,4 +30,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
    - No tomar en cuenta `xG` ni `Remates` al transcribir capturas de partidos.
    - Mantener las columnas de `Córners`, `Amarillas` y `Rojas`.
 
+5. **Prohibición Estricta de Mercados 'Menos de Goles en Primer Tiempo' (Under 1T)**:
+   - NUNCA recomendar, mencionar, sugerir ni incluir mercados de "Menos de goles en el 1er tiempo / 1ª parte" (Under 1.5 1T, Under 2.5 1T, Under 3.5 1T) en ningún análisis, reporte, tabla de patrones o Tier List.
+   - Queda totalmente vetado de todas las respuestas y recomendaciones futuras.
+   - Enfocar las recomendaciones en mercados de acumulación que se van asegurando con el tiempo (Más de 4.5/5.5 Córners, Más de 1.5 Tarjetas, Más de 0.5 Goles FT).
+
+
 

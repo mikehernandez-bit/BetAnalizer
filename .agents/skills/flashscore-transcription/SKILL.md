@@ -22,3 +22,8 @@ Para garantizar que NINGUNA apuesta o análisis falle por errores de transcripci
 3. **Verificación Cuádruple del 1T**:
    - Antes de guardar cualquier JSON o presentar cualquier tabla, auditar fila por fila la Columna 2.
    - `goalsForFirstHalf` y `goalsAgainstFirstHalf` deben coincidir exactamente con la Columna 2 desde la perspectiva del equipo (local vs visitante).
+
+4. **Prohibición Total de Recomendar 'Menos de Goles en 1T'**:
+   - Queda terminantemente prohibido sugerir o recomendar mercados de "Menos de goles en el primer tiempo" (Under 1T) en los reportes o tablas de patrones.
+   - Priorizar siempre mercados acumulativos (Más de 4.5 córners, Más de 1.5 tarjetas, Más de 0.5 goles FT).
+

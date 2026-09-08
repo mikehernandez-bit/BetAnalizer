@@ -3,14 +3,16 @@ import { scanThreeDayAuditMatches, HistoryRiskTier } from "@/lib/bet-records";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const refDate = searchParams.get("date") || "2026-08-27";
   const tiers: HistoryRiskTier[] = ["ultra", "balanced", "all"];
   const result: Record<string, unknown> = {};
 
   for (const tier of tiers) {
-    const summary = scanThreeDayAuditMatches("2026-08-26", tier);
-    const yesterdayMatches = summary.matches.filter((m) => m.date === "2026-08-25" && Boolean(m.outcome));
-    const todayMatches = summary.matches.filter((m) => m.date === "2026-08-26" && Boolean(m.outcome));
+    const summary = scanThreeDayAuditMatches(refDate, tier);
+    const yesterdayMatches = summary.matches.filter((m) => m.date === summary.dates.yesterday && Boolean(m.outcome));
+    const todayMatches = summary.matches.filter((m) => m.date === summary.dates.today && Boolean(m.outcome));
 
     const calc = (list: typeof summary.matches) => {
       let hits = 0;

@@ -27403,8 +27403,46 @@ export const allTeamHistories: Record<string, TeamMatchRecord[]> = combineHistor
   importedHistories
 );
 
+function normalizeHistoryTeamId(id: string): string {
+  if (!id) return "";
+  const map: Record<string, string> = {
+    "atlanta-united-fc": "atlanta-united",
+    "atlanta-united": "atlanta-united-fc",
+    "club-alianza-lima": "alianza-lima",
+    "alianza-lima": "club-alianza-lima",
+    "inter-miami-cf": "inter-miami",
+    "inter-miami": "inter-miami-cf",
+    "los-angeles-fc": "lafc",
+    "lafc": "los-angeles-fc",
+    "cf-montreal": "montreal-impact",
+    "montreal-impact": "cf-montreal",
+    "charlotte-fc": "charlotte",
+    "charlotte": "charlotte-fc",
+    "new-york-city-fc": "new-york-city",
+    "new-york-city": "new-york-city-fc",
+    "new-york-red-bulls": "ny-red-bulls",
+    "ny-red-bulls": "new-york-red-bulls",
+    "utc-de-cajamarca": "utc-cajamarca",
+    "utc-cajamarca": "utc-de-cajamarca",
+  };
+  return map[id] || id;
+}
+
 export function getTeamMatchPool(teamId: string): TeamMatchRecord[] {
-  return allTeamHistories[teamId] ?? [];
+  if (!teamId) return [];
+  if (allTeamHistories[teamId]?.length) return allTeamHistories[teamId];
+
+  const alias = normalizeHistoryTeamId(teamId);
+  if (allTeamHistories[alias]?.length) return allTeamHistories[alias];
+
+  const stripped = teamId.replace(/-fc$|^club-|-cf$/, "");
+  for (const key of Object.keys(allTeamHistories)) {
+    if (key.replace(/-fc$|^club-|-cf$/, "") === stripped) {
+      return allTeamHistories[key];
+    }
+  }
+
+  return [];
 }
 
 export function getTeamMatchHistory(teamId: string, count: number): TeamMatchRecord[] {

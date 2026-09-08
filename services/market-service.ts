@@ -393,6 +393,14 @@ function resolveGoalsOver05(ctx: MarketEvalContext): ResolvedMarket {
   const awayScores = contextualRate(ctx.awayRecords, "visitante", (record) => record.goalsFor >= 1);
   const homeConcedes = contextualRate(ctx.homeRecords, "local", (record) => record.goalsAgainst >= 1);
 
+  // Análisis individual de blanqueadas (capacidad anotadora por condición local/visita y total)
+  const homeVenueRecords = ctx.homeRecords.filter((r) => r.venue === "local");
+  const awayVenueRecords = ctx.awayRecords.filter((r) => r.venue === "visitante");
+  const homeShutoutTotal = percentageEvidence(ctx.homeRecords, (r) => r.goalsFor === 0);
+  const homeShutoutVenue = percentageEvidence(homeVenueRecords, (r) => r.goalsFor === 0);
+  const awayShutoutTotal = percentageEvidence(ctx.awayRecords, (r) => r.goalsFor === 0);
+  const awayShutoutVenue = percentageEvidence(awayVenueRecords, (r) => r.goalsFor === 0);
+
   const homeGoalChance = weightedPercentage([
     { value: homeScores.score, weight: 0.6 },
     { value: awayConcedes.score, weight: 0.4 },
@@ -401,7 +409,19 @@ function resolveGoalsOver05(ctx: MarketEvalContext): ResolvedMarket {
     { value: awayScores.score, weight: 0.6 },
     { value: homeConcedes.score, weight: 0.4 },
   ]);
-  const atLeastOneGoal = clampPercentage(100 * (1 - (1 - homeGoalChance / 100) * (1 - awayGoalChance / 100)));
+  
+  // Probabilidad conjunta de que al menos uno anote considerando la tasa de blanqueada específica
+  let atLeastOneGoal = clampPercentage(100 * (1 - (1 - homeGoalChance / 100) * (1 - awayGoalChance / 100)));
+
+  // Penalización si ambos equipos registran blanqueadas en su condición
+  const homeVenueShutoutRate = homeShutoutVenue.total >= 3 ? homeShutoutVenue.pct : homeShutoutTotal.pct;
+  const awayVenueShutoutRate = awayShutoutVenue.total >= 3 ? awayShutoutVenue.pct : awayShutoutTotal.pct;
+  const doubleShutoutRisk = (homeVenueShutoutRate / 100) * (awayVenueShutoutRate / 100);
+
+  if (doubleShutoutRisk > 0.02) {
+    const penalty = Math.round(doubleShutoutRisk * 100 * 0.8);
+    atLeastOneGoal = clampPercentage(atLeastOneGoal - penalty);
+  }
 
   const homeContext = contextualRecords(ctx.homeRecords, "local");
   const awayContext = contextualRecords(ctx.awayRecords, "visitante");
@@ -426,23 +446,42 @@ function resolveGoalsOver05(ctx: MarketEvalContext): ResolvedMarket {
     { value: last3Ratio(ctx.awayRecords, (record) => record.goalsFor + record.goalsAgainst >= 1), weight: 0.5 },
   ]);
 
+  const contradictions: string[] = [];
+  if (alignment < 60) {
+    contradictions.push("Ataque y concesion rival no estan alineados en ambos caminos de gol; la certeza fue penalizada.");
+  }
+  if (homeVenueShutoutRate >= 15) {
+    contradictions.push(`${ctx.homeTeam.shortName} se quedó sin anotar en el ${homeVenueShutoutRate}% de sus partidos en casa (${homeShutoutVenue.hits}/${homeShutoutVenue.total || homeShutoutTotal.total}).`);
+  }
+  if (awayVenueShutoutRate >= 15) {
+    contradictions.push(`${ctx.awayTeam.shortName} se quedó sin anotar en el ${awayVenueShutoutRate}% de sus salidas fuera (${awayShutoutVenue.hits}/${awayShutoutVenue.total || awayShutoutTotal.total}).`);
+  }
+  if (homeVenueShutoutRate >= 15 && awayVenueShutoutRate >= 15) {
+    contradictions.push("⚠️ Riesgo de Doble Blanqueada: Ambos equipos presentan tasas de sequía ofensiva en sus respectivas condiciones (local/visitante); riesgo de empate 0-0.");
+  }
+
+  // Si ambos equipos tienen riesgo individual de blanqueada, limitar la confianza prudencialmente
+  let confidenceCap: number | undefined = undefined;
+  if (homeVenueShutoutRate >= 15 && awayVenueShutoutRate >= 15) {
+    confidenceCap = 82;
+  }
+
   return {
     estimate,
     sampleSize: Math.min(ctx.homeRecords.length, ctx.awayRecords.length),
+    confidenceCap,
     probabilitySignals: [
-      { label: `${ctx.homeTeam.shortName} anota +0.5 goles`, value: `${homeScores.rawPct}%`, detail: evidenceDetail(homeScores) },
+      { label: `${ctx.homeTeam.shortName} anota +0.5 goles`, value: `${homeScores.rawPct}%`, detail: `${evidenceDetail(homeScores)} · ${100 - homeVenueShutoutRate}% efectividad local` },
       { label: `${ctx.awayTeam.shortName} concede +0.5 goles`, value: `${awayConcedes.rawPct}%`, detail: evidenceDetail(awayConcedes) },
-      { label: `${ctx.awayTeam.shortName} anota +0.5 goles`, value: `${awayScores.rawPct}%`, detail: evidenceDetail(awayScores) },
+      { label: `${ctx.awayTeam.shortName} anota +0.5 goles`, value: `${awayScores.rawPct}%`, detail: `${evidenceDetail(awayScores)} · ${100 - awayVenueShutoutRate}% efectividad visitante` },
       { label: `${ctx.homeTeam.shortName} concede +0.5 goles`, value: `${homeConcedes.rawPct}%`, detail: evidenceDetail(homeConcedes) },
     ],
     positivePatterns: [
       `Modelo de +0.5: local ${homeGoalChance}% y visitante ${awayGoalChance}%; probabilidad conjunta ${atLeastOneGoal}%.`,
+      `Efectividad anotadora individual: ${ctx.homeTeam.shortName} (${100 - homeVenueShutoutRate}% en casa) · ${ctx.awayTeam.shortName} (${100 - awayVenueShutoutRate}% fuera).`,
       `Historial en condicion local/visitante: ${historic.rawPct}% (${historic.hits}/${historic.total}).`,
     ],
-    contradictions:
-      alignment < 60
-        ? ["Ataque y concesion rival no estan alineados en ambos caminos de gol; la certeza fue penalizada."]
-        : [],
+    contradictions,
     confidenceInputs: buildConfidenceInputs({
       recentPerformance: historic.score,
       rivalVulnerability: weightedPercentage([
@@ -590,9 +629,27 @@ function resolveBtts(marketId: string, ctx: MarketEvalContext): ResolvedMarket {
   const awayScores = contextualRate(ctx.awayRecords, "visitante", (r) => r.goalsFor >= 1);
   const homeConcedes = contextualRate(ctx.homeRecords, "local", (r) => r.goalsAgainst >= 1);
 
+  // Análisis individual de blanqueadas por condición local / visita
+  const homeVenueRecords = ctx.homeRecords.filter((r) => r.venue === "local");
+  const awayVenueRecords = ctx.awayRecords.filter((r) => r.venue === "visitante");
+  const homeShutoutTotal = percentageEvidence(ctx.homeRecords, (r) => r.goalsFor === 0);
+  const homeShutoutVenue = percentageEvidence(homeVenueRecords, (r) => r.goalsFor === 0);
+  const awayShutoutTotal = percentageEvidence(ctx.awayRecords, (r) => r.goalsFor === 0);
+  const awayShutoutVenue = percentageEvidence(awayVenueRecords, (r) => r.goalsFor === 0);
+
+  const homeVenueShutoutRate = homeShutoutVenue.total >= 3 ? homeShutoutVenue.pct : homeShutoutTotal.pct;
+  const awayVenueShutoutRate = awayShutoutVenue.total >= 3 ? awayShutoutVenue.pct : awayShutoutTotal.pct;
+
   const homeGoalProb = (homeScores.score * 0.6 + awayConcedes.score * 0.4) / 100;
   const awayGoalProb = (awayScores.score * 0.6 + homeConcedes.score * 0.4) / 100;
-  const bttsYesProb = Math.round(homeGoalProb * awayGoalProb * 100);
+  let bttsYesProb = Math.round(homeGoalProb * awayGoalProb * 100);
+
+  // Ajuste por sequía ofensiva individual en la condición del partido
+  if (homeVenueShutoutRate >= 15 || awayVenueShutoutRate >= 15) {
+    const penalty = Math.round(((homeVenueShutoutRate + awayVenueShutoutRate) / 2) * 0.35);
+    bttsYesProb = clampPercentage(bttsYesProb - penalty);
+  }
+
   const rawEstimate = marketId === "btts_yes" ? bttsYesProb : 100 - bttsYesProb;
   const estimate = weightedPercentage([
     { value: rawEstimate, weight: 0.6 },
@@ -604,31 +661,47 @@ function resolveBtts(marketId: string, ctx: MarketEvalContext): ResolvedMarket {
     (r) => r.goalsFor >= 1 && r.goalsAgainst >= 1
   );
 
+  const contradictions = [];
+  let confidenceCap = undefined;
+
+  if (marketId === "btts_yes") {
+    if (homeVenueShutoutRate >= 15) {
+      contradictions.push(`${ctx.homeTeam.shortName} no anotó en el ${homeVenueShutoutRate}% de sus partidos como local; riesgo para Ambos Anotan.`);
+    }
+    if (awayVenueShutoutRate >= 15) {
+      contradictions.push(`${ctx.awayTeam.shortName} no anotó en el ${awayVenueShutoutRate}% de sus salidas fuera; riesgo para Ambos Anotan.`);
+    }
+    if (homeVenueShutoutRate >= 15 || awayVenueShutoutRate >= 15) {
+      confidenceCap = 78;
+    }
+  }
+
   return {
     estimate,
     sampleSize: combined.total,
+    confidenceCap,
     probabilitySignals: [
       {
         label: `${ctx.homeTeam.shortName} marca (vs permite ${ctx.awayTeam.shortName})`,
         value: `${Math.round(homeGoalProb * 100)}%`,
-        detail: `Local marca en ${homeScores.rawPct}%, visitante concede en ${awayConcedes.rawPct}%`,
+        detail: `Local marca en ${homeScores.rawPct}% (${100 - homeVenueShutoutRate}% efectividad en casa), visitante concede en ${awayConcedes.rawPct}%`,
       },
       {
         label: `${ctx.awayTeam.shortName} marca (vs permite ${ctx.homeTeam.shortName})`,
         value: `${Math.round(awayGoalProb * 100)}%`,
-        detail: `Visitante marca en ${awayScores.rawPct}%, local concede en ${homeConcedes.rawPct}%`,
+        detail: `Visitante marca en ${awayScores.rawPct}% (${100 - awayVenueShutoutRate}% efectividad fuera), local concede en ${homeConcedes.rawPct}%`,
       },
       {
         label: `Cruce ambas tablas (BTTS ${marketId === "btts_yes" ? "Sí" : "No"})`,
         value: `${estimate}%`,
-        detail: `Modelo cruzado de ataque-defensa de ambos equipos`,
+        detail: `Modelo cruzado con análisis individual de sequía ofensiva`,
       },
     ],
     positivePatterns: [
-      `Cruce de ambas tablas: ${ctx.homeTeam.shortName} anota en ${homeScores.rawPct}% en casa y ${ctx.awayTeam.shortName} en ${awayScores.rawPct}% fuera.`,
+      `Cruce de ambas tablas: ${ctx.homeTeam.shortName} anota en ${homeScores.rawPct}% en casa (${100 - homeVenueShutoutRate}% efectividad local) y ${ctx.awayTeam.shortName} en ${awayScores.rawPct}% fuera (${100 - awayVenueShutoutRate}% efectividad visita).`,
       `Cumplimiento BTTS directo: ${ctx.homeTeam.shortName} (Local): ${homeSide.pct}% · ${ctx.awayTeam.shortName} (Visitante): ${awaySide.pct}%.`,
     ],
-    contradictions: [],
+    contradictions,
     confidenceInputs: buildConfidenceInputs({
       recentPerformance: estimate,
       rivalVulnerability: estimate,

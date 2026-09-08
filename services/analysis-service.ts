@@ -222,10 +222,23 @@ export function resolveAnalysisById(id: string): AnalysisResult | null {
   if (cachedConfig) return generateAnalysis(cachedConfig);
 
   const parsed = parseAnalysisId(id);
-  if (!parsed) return null;
-  const home = getTeamById(parsed.homeTeamId);
-  const away = getTeamById(parsed.awayTeamId);
-  if (!home || !away) return null;
+  if (parsed) {
+    const home = getTeamById(parsed.homeTeamId);
+    const away = getTeamById(parsed.awayTeamId);
+    if (home && away) {
+      return generateAnalysis(defaultAnalysisConfig(parsed.homeTeamId, parsed.awayTeamId, parsed.matchCount));
+    }
+  }
 
-  return generateAnalysis(defaultAnalysisConfig(parsed.homeTeamId, parsed.awayTeamId, parsed.matchCount));
+  // Fallback: Si el ID corresponde directamente al id de un partido registrado
+  const match = matches.find((m) => m.id === id);
+  if (match) {
+    const home = getTeamById(match.homeTeamId);
+    const away = getTeamById(match.awayTeamId);
+    if (home && away) {
+      return generateAnalysis(defaultAnalysisConfig(match.homeTeamId, match.awayTeamId, 15));
+    }
+  }
+
+  return null;
 }
