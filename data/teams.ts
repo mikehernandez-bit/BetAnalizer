@@ -5905,6 +5905,7 @@ function normalizeTeamLookupId(id: string): string {
     "sunderland-afc": "sunderland",
     "crystal-palace-fc": "crystal-palace",
     "middlesbrough-fc": "middlesbrough",
+    "millwall-fc": "millwall",
   };
   return map[id] || id;
 }
