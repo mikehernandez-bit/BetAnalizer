@@ -5903,6 +5903,8 @@ function normalizeTeamLookupId(id: string): string {
     "utc-de-cajamarca": "utc-cajamarca",
     "utc-cajamarca": "utc-cajamarca",
     "sunderland-afc": "sunderland",
+    "crystal-palace-fc": "crystal-palace",
+    "middlesbrough-fc": "middlesbrough",
   };
   return map[id] || id;
 }
