@@ -5902,6 +5902,7 @@ function normalizeTeamLookupId(id: string): string {
     "ny-red-bulls": "ny-red-bulls",
     "utc-de-cajamarca": "utc-cajamarca",
     "utc-cajamarca": "utc-cajamarca",
+    "sunderland-afc": "sunderland",
   };
   return map[id] || id;
 }
