@@ -199352,22 +199352,42 @@
     },
     {
       "id": "ssc-napoli-vs-arsenal-fc-2026-09-09",
-      "importedAt": "2026-09-09T15:05:23.773Z",
-      "source": "scores24",
-      "match": {
-        "id": "ssc-napoli-vs-arsenal-fc-2026-09-09",
-        "competitionId": "uefa-champions-league",
-        "competitionType": "league",
-        "season": "2026",
-        "matchday": 1,
-        "date": "2026-09-09",
-        "time": "14:00",
-        "stadium": "Stadio Diego Armando Maradona",
-        "neutralVenue": false,
-        "homeTeamId": "ssc-napoli",
-        "awayTeamId": "arsenal-fc",
-        "status": "scheduled"
-      },
+      "researchedAt": "2026-09-09T14:00:00.000Z",
+      "sourceUrls": [
+        "https://scores24.live/es/soccer/m-ssc-napoli-arsenal-09-09-2026"
+      ],
+      "competitions": [
+        {
+          "id": "uefa-champions-league",
+          "name": "UEFA Champions League",
+          "shortName": "Champions League",
+          "country": "Europa",
+          "tier": 1,
+          "season": "2026",
+          "color": "#00875A",
+          "totalTeams": 36
+        },
+        {
+          "id": "serie-a",
+          "name": "Serie A",
+          "shortName": "Serie A",
+          "country": "Italia",
+          "tier": 1,
+          "season": "2026",
+          "color": "#00875A",
+          "totalTeams": 18
+        },
+        {
+          "id": "premier-league",
+          "name": "Premier League",
+          "shortName": "Premier League",
+          "country": "Inglaterra",
+          "tier": 1,
+          "season": "2026-2027",
+          "color": "#38003C",
+          "totalTeams": 20
+        }
+      ],
       "teams": [
         {
           "id": "ssc-napoli",
@@ -199430,6 +199450,20 @@
           "avgCorners": 5.07
         }
       ],
+      "match": {
+        "id": "ssc-napoli-vs-arsenal-fc-2026-09-09",
+        "competitionId": "uefa-champions-league",
+        "competitionType": "league",
+        "season": "2026",
+        "matchday": 1,
+        "date": "2026-09-09",
+        "time": "14:00",
+        "stadium": "Stadio Diego Armando Maradona",
+        "neutralVenue": false,
+        "homeTeamId": "ssc-napoli",
+        "awayTeamId": "arsenal-fc",
+        "status": "scheduled"
+      },
       "histories": {
         "ssc-napoli": [
           {
